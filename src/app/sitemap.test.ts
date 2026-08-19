@@ -33,12 +33,23 @@ describe('plan du site', () => {
         expect(new Set(entries.map((e) => e.url)).size).toBe(entries.length);
     });
 
-    it('déclare les traductions de chaque URL, x-default compris', async () => {
+    it('n’émet aucune alternance de langue dans le XML', async () => {
+        // Délibéré : `alternates.languages` fait produire des `<xhtml:link>`,
+        // et un XML portant des éléments de l'espace de noms XHTML n'est plus
+        // affiché en arbre par les navigateurs — il retombe en texte à plat.
+        // Les `hreflang` vivent dans le `<head>` de chaque page, ce qui suffit
+        // à Google.
         for (const entry of await sitemap()) {
-            const languages = entry.alternates?.languages ?? {};
-            expect(Object.keys(languages).sort()).toEqual(['en', 'fr', 'x-default']);
-            expect(languages['x-default']).toBe(languages.fr);
+            expect(entry.alternates).toBeUndefined();
         }
+    });
+
+    it('couvre les deux langues, chacune par son URL propre', async () => {
+        // Ce que les alternances garantissaient encore : qu'aucune langue ne
+        // soit oubliée du plan.
+        const urls = (await sitemap()).map((entry) => entry.url);
+        expect(urls).toContain('https://pushyourluck.net/regles');
+        expect(urls).toContain('https://pushyourluck.net/en/rules');
     });
 
     it('donne la priorité maximale à l’accueil', async () => {

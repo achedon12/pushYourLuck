@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { absoluteUrl } from '@/lib/site';
 import { LOCALES, type Locale } from '@/i18n/config';
-import { ROUTE_KEYS, path, alternates, MONTH_PARAM, type RouteKey } from '@/i18n/routes';
+import { ROUTE_KEYS, path, MONTH_PARAM, type RouteKey } from '@/i18n/routes';
 import { CHANGELOG } from '@/content/changelog';
 import { prisma } from '@/lib/prisma';
 import { dayKey } from '@/lib/daily';
@@ -77,8 +77,21 @@ async function archiveMonths(currentMonth: string): Promise<string[]> {
 }
 
 /**
- * Chaque URL déclare ses traductions via `alternates.languages`. Sans ça, les
- * deux versions d'une page se concurrencent au lieu de se compléter.
+ * Les traductions ne sont PAS déclarées ici, et c'est un choix.
+ *
+ * `alternates.languages` fait émettre à Next des éléments `<xhtml:link>`. Or
+ * un document XML contenant des éléments de l'espace de noms XHTML n'est plus
+ * affiché par le visualiseur intégré des navigateurs : Chrome le rend comme du
+ * balisage, c'est-à-dire en texte à plat, balises invisibles. Le fichier reste
+ * parfaitement valide — les moteurs le lisent sans broncher — mais il devient
+ * illisible pour un humain qui l'ouvre, ce qui est le principal usage qu'on en
+ * a. Vérifié : le même plan sans ces éléments s'affiche en arbre replié, CSP
+ * comprise.
+ *
+ * Le signal n'est pas perdu pour autant : chaque page sert déjà ses
+ * `<link rel="alternate" hreflang>` dans son `<head>` (voir `lib/metadata.ts`,
+ * vérifié par `seo.spec.ts`), et Google se contente d'une seule de ces
+ * déclarations. Seules les URL d'archive perdent leur réciproque explicite.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Dater toutes les pages de « maintenant » à chaque rendu est un signal
@@ -90,19 +103,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     const staticEntries = LOCALES.flatMap((locale) =>
         ROUTE_KEYS.map((key) => {
-            const languages = alternates(key);
             return {
                 url: absoluteUrl(path(key, locale)),
                 lastModified: key === 'leaderboard' ? now : released,
                 changeFrequency: STATIC_ROUTES[key].changeFrequency,
                 priority: STATIC_ROUTES[key].priority,
-                alternates: {
-                    languages: {
-                        fr: absoluteUrl(languages.fr),
-                        en: absoluteUrl(languages.en),
-                        'x-default': absoluteUrl(languages.fr),
-                    },
-                },
             };
         }),
     );
@@ -121,13 +126,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             lastModified: new Date(`${shiftMonth(month, 1)}-01T00:00:00Z`),
             changeFrequency: 'yearly' as const,
             priority: 0.4,
-            alternates: {
-                languages: {
-                    fr: monthUrl('fr', month),
-                    en: monthUrl('en', month),
-                    'x-default': monthUrl('fr', month),
-                },
-            },
         })),
     );
 

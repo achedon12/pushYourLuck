@@ -27,7 +27,20 @@ test.describe('référencement', () => {
         const sitemap = await (await request.get('/sitemap.xml')).text();
         expect(sitemap).toContain('/regles');
         expect(sitemap).toContain('/en/rules');
-        expect(sitemap).toContain('hreflang="x-default"');
+    });
+
+    test('sert un plan que le navigateur affiche comme du XML', async ({ request }) => {
+        const response = await request.get('/sitemap.xml');
+        const sitemap = await response.text();
+
+        expect(response.headers()['content-type']).toContain('xml');
+        // Un élément de l'espace de noms XHTML fait basculer le navigateur en
+        // rendu de balisage : le plan s'affiche alors en texte à plat, balises
+        // invisibles, et devient illisible pour qui l'ouvre. Les `hreflang`
+        // sont déclarés dans le `<head>` de chaque page — voir le test des
+        // canoniques plus haut.
+        expect(sitemap).not.toContain('xhtml');
+        expect(sitemap).toContain('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">');
     });
 
     test('autorise l’indexation et interdit l’API dans robots.txt', async ({ request }) => {
