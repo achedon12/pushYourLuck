@@ -46,7 +46,7 @@
     "sharp": "^0.35.3",
     "tailwindcss": "^4",
     "tsx": "^4.23.12",
-    "typescript": "^5",
+    "typescript": "^7",
     "vitest": "^4.1.11"
   },
   "description": "Push Your Luck — jeu de risque et de deck, sur pushyourluck.net",
