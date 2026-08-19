@@ -1,0 +1,53 @@
+{
+  "name": "push-your-luck",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3001",
+    "build": "next build",
+    "start": "next start -p 3001",
+    "lint": "eslint",
+    "db:up": "docker compose -p pushyourluck -f docker-compose.dev.yml up -d",
+    "db:down": "docker compose -p pushyourluck -f docker-compose.dev.yml down",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "sim": "tsx scripts/simulate.ts",
+    "smoke": "tsx scripts/smoke-scores.ts",
+    "logos": "tsx scripts/export-logos.ts",
+    "seed:history": "tsx scripts/seed-history.ts",
+    "backup": "tsx scripts/backup.ts",
+    "test": "vitest run && playwright test",
+    "test:watch": "vitest",
+    "test:unit": "vitest run",
+    "test:functional": "playwright test --project=fonctionnel",
+    "test:visual": "playwright test --project=visuel",
+    "test:visual:update": "playwright test --project=visuel --update-snapshots",
+    "db:test:setup": "bash scripts/setup-test-db.sh"
+  },
+  "dependencies": {
+    "@prisma/adapter-mariadb": "^7.9.1",
+    "@prisma/client": "^7.9.1",
+    "lucide-react": "^1.33.0",
+    "next": "16.3.1",
+    "node-cron": "^4.6.0",
+    "prisma": "^7.9.1",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/node-cron": "^3.0.11",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.1",
+    "sharp": "^0.35.3",
+    "tailwindcss": "^4",
+    "tsx": "^4.23.12",
+    "typescript": "^5",
+    "vitest": "^4.1.11"
+  },
+  "description": "Push Your Luck — jeu de risque et de deck, sur pushyourluck.net"
+}

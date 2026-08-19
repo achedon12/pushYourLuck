@@ -1,0 +1,75 @@
+# Stack de PRODUCTION du site pushyourluck.net.
+#
+# Isolation vis-à-vis du loup-garou : projet Docker `games`, réseau
+# `pyl_network`, volume `games_mysql_data`, conteneurs préfixés `games_`.
+# Aucun nom n'est partagé avec la stack werewolf.
+#
+# ⚠️ CONFLIT DE PORT À CONNAÎTRE : le docker-compose.yml du loup-garou mappe
+# déjà l'hôte 3001 (werewolf_node_blue → 3001:3000). Si les deux stacks
+# tournent sur la même machine, `docker compose up` échouera sur un bind
+# address already in use. D'où la variable : garder 3001 en local (où seule la
+# stack dev du loup-garou tourne), et poser PYL_HOST_PORT=3005 dans le .env
+# du serveur si les deux prods cohabitent.
+#
+# ⚠️ Ce fichier est versionné dans un dépôt PUBLIC : aucun mot de passe ne doit
+# y figurer, même en valeur de repli. La syntaxe `${VAR:?message}` fait échouer
+# le démarrage si la variable manque, plutôt que de retomber en silence sur un
+# mot de passe que tout le monde peut lire.
+#
+# Lancer :  docker compose -p pushyourluck up -d --build
+services:
+
+  pyl_node:
+    container_name: pyl_node
+    image: push-your-luck-app:latest
+    build: .
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      # Dans le réseau Docker, la base est joignable par son nom de service.
+      DATABASE_URL: mysql://pushyourluck:${MYSQL_PASSWORD:?MYSQL_PASSWORD est obligatoire}@pyl_db:3306/pushyourluck
+    volumes:
+      # Les sauvegardes quotidiennes sont écrites par le cron du processus Next :
+      # sans ce montage, elles disparaîtraient à chaque redéploiement.
+      - ./dump:/app/dump
+    ports:
+      - "${PYL_HOST_PORT:-3001}:3000"
+    depends_on:
+      pyl_db:
+        condition: service_healthy
+    networks:
+      - pyl_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+
+  pyl_db:
+    image: mysql:8.4
+    container_name: pyl_db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD est obligatoire}
+      MYSQL_DATABASE: pushyourluck
+      MYSQL_USER: pushyourluck
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD est obligatoire}
+    # Pas de `ports:` en prod — la base ne sort pas du réseau Docker.
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+    networks:
+      - pyl_network
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -upushyourluck -p\"$$MYSQL_PASSWORD\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+networks:
+  pyl_network:
+    name: pyl_network
+

@@ -1,0 +1,38 @@
+// Prisma 7 : le client n'est plus généré dans node_modules, `output` est
+// obligatoire. Il atterrit sous `src/generated/prisma` (dossier gitignoré,
+// reconstruit par `prisma generate`). L'URL n'est pas déclarée ici — Migrate la
+// lit depuis prisma.config.ts, le client la reçoit via l'adaptateur MariaDB
+// (voir src/lib/prisma.ts).
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+/// Table de scores volontairement générique : chaque jeu du hub s'y branche
+/// via `game`, sans migration. `mode` sépare la partie quotidienne (graine
+/// commune à tous, classement remis à zéro chaque jour) de la partie libre.
+model Score {
+  id        Int      @id @default(autoincrement())
+  game      String   @db.VarChar(48)
+  mode      String   @db.VarChar(16)
+  /// "2026-08-19" en mode daily, chaîne vide en mode libre. Non nullable
+  /// volontairement : MySQL n'applique pas une contrainte UNIQUE aux lignes
+  /// dont une colonne est NULL, ce qui laisserait un joueur empiler autant de
+  /// scores libres qu'il veut.
+  dayKey    String   @default("") @db.VarChar(16)
+  name      String   @db.VarChar(20)
+  score     Int
+  /// Nombre de manches encaissées — sert de départage à score égal.
+  rounds    Int      @default(0)
+  /// Identifiant anonyme stocké côté navigateur : borne à un score quotidien
+  /// par joueur sans imposer de compte.
+  clientId  String   @db.VarChar(64)
+  createdAt DateTime @default(now())
+
+  @@unique([game, mode, dayKey, clientId], name: "one_score_per_day")
+  @@index([game, mode, dayKey, score(sort: Desc)])
+}

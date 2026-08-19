@@ -1,0 +1,6 @@
+node_modules
+.next
+.git
+mysql-data
+mysql-data-dev
+*.log

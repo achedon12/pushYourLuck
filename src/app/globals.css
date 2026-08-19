@@ -1,0 +1,244 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------------
+   Design system — deux thèmes.
+
+   Trois états à couvrir, et l'ordre compte :
+     1. `:root` porte le thème CLAIR, qui est aussi le défaut.
+     2. le média `prefers-color-scheme: dark` bascule en sombre, mais seulement
+        si l'utilisateur n'a pas explicitement demandé le clair — d'où le
+        `:not([data-theme="light"])`, sans lequel le bouton ne pourrait plus
+        forcer le clair sur une machine réglée en sombre.
+     3. `[data-theme="dark"]` force le sombre et gagne dans les deux sens.
+
+   Aucune couleur ne doit avoir sa SEULE définition dans un bloc média ou
+   `[data-theme]` : la valeur de base vit toujours sur `:root`.
+   ------------------------------------------------------------------------ */
+:root {
+    /* Papier chaud plutôt que blanc pur : sur un fond de jeu occupé par de l'or
+       et du violet, le #fff renvoie trop de lumière et écrase les couleurs qui
+       portent l'information. Le fond est plus sombre que les cartes, pas
+       l'inverse — c'est ce qui fait « lever » le plateau sans une seule ombre. */
+    --bg: #f4f2ed;
+    --bg-soft: #eae7e0;
+    --surface: #fbfaf7;
+    --surface-hi: #ffffff;
+    --border: #1b1a1820;
+    --border-hi: #1b1a1838;
+
+    --text: #1b1a18;
+    --muted: #605c55;
+    --faint: #8c877e;
+
+    /* Voile neutre : remplace les `white/x` codés en dur, qui disparaissaient
+       purement et simplement sur fond clair. */
+    --tint: #1b1a180a;
+    --tint-hi: #1b1a1814;
+
+    /* Couleurs porteuses de sens. En clair elles sont assombries : l'or et le
+       vert du thème sombre passent le contraste sur #07070a, pas sur du papier. */
+    --brand: #5a37d8;
+    --brand-soft: #46249f;
+    --gold: #96600a;
+    --gold-soft: #6d4404;
+    --danger: #c41f33;
+    --success: #0b7050;
+
+    /* Halos de fond et lueurs des cartes : à peine posés en clair, francs en sombre. */
+    --halo-a: #5a37d80f;
+    --halo-b: #96600a0f;
+    --glow-gold: #96600a2b;
+    --glow-brand: #5a37d82b;
+    --glow-danger: #c41f332b;
+    --glow-success: #0b70502b;
+    --back-stripe: #5a37d81c;
+
+    --radius: 16px;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --bg: #07070a;
+        --bg-soft: #0d0d12;
+        --surface: #111117;
+        --surface-hi: #17171f;
+        --border: #ffffff14;
+        --border-hi: #ffffff24;
+
+        --text: #f4f4f6;
+        --muted: #9a9aa8;
+        --faint: #62626f;
+
+        --tint: #ffffff0d;
+        --tint-hi: #ffffff17;
+
+        --brand: #7c5cff;
+        --brand-soft: #a08cff;
+        --gold: #f5b544;
+        --gold-soft: #ffd58a;
+        --danger: #ff4d5e;
+        --success: #2fd39b;
+
+        --halo-a: #7c5cff1a;
+        --halo-b: #f5b5440f;
+        --glow-gold: #f5b544bf;
+        --glow-brand: #7c5cffd9;
+        --glow-danger: #ff4d5ed9;
+        --glow-success: #2fd39bb3;
+        --back-stripe: #7c5cff29;
+    }
+}
+
+:root[data-theme="dark"] {
+    --bg: #07070a;
+    --bg-soft: #0d0d12;
+    --surface: #111117;
+    --surface-hi: #17171f;
+    --border: #ffffff14;
+    --border-hi: #ffffff24;
+
+    --text: #f4f4f6;
+    --muted: #9a9aa8;
+    --faint: #62626f;
+
+    --tint: #ffffff0d;
+    --tint-hi: #ffffff17;
+
+    --brand: #7c5cff;
+    --brand-soft: #a08cff;
+    --gold: #f5b544;
+    --gold-soft: #ffd58a;
+    --danger: #ff4d5e;
+    --success: #2fd39b;
+
+    --halo-a: #7c5cff1a;
+    --halo-b: #f5b5440f;
+    --glow-gold: #f5b544bf;
+    --glow-brand: #7c5cffd9;
+    --glow-danger: #ff4d5ed9;
+    --glow-success: #2fd39bb3;
+    --back-stripe: #7c5cff29;
+}
+
+@theme inline {
+    --color-bg: var(--bg);
+    --color-bg-soft: var(--bg-soft);
+    --color-surface: var(--surface);
+    --color-surface-hi: var(--surface-hi);
+    --color-line: var(--border);
+    --color-line-hi: var(--border-hi);
+    --color-tint: var(--tint);
+    --color-tint-hi: var(--tint-hi);
+    --color-text: var(--text);
+    --color-muted: var(--muted);
+    --color-faint: var(--faint);
+    --color-brand: var(--brand);
+    --color-brand-soft: var(--brand-soft);
+    --color-gold: var(--gold);
+    --color-gold-soft: var(--gold-soft);
+    --color-danger: var(--danger);
+    --color-success: var(--success);
+    --font-sans: var(--font-geist-sans);
+    --font-mono: var(--font-geist-mono);
+}
+
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+html {
+    background: var(--bg);
+    /* `light dark` laisse le navigateur styler les éléments natifs (barres de
+       défilement, champs) du bon côté ; les deux surcharges qui suivent le
+       forcent quand l'utilisateur a tranché. */
+    color-scheme: light dark;
+}
+
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"]  { color-scheme: dark; }
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+    /* Halos très diffus : de la profondeur sans image de fond à charger. */
+    background-image:
+            radial-gradient(80rem 40rem at 12% -10%, var(--halo-a), transparent 60%),
+            radial-gradient(60rem 32rem at 92% 0%, var(--halo-b), transparent 60%);
+    background-attachment: fixed;
+}
+
+::selection {
+    background: var(--brand);
+    color: #fff;
+}
+
+/* Focus visible homogène — accessibilité clavier sur tout le site. */
+:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+    border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* --- Bascule de thème -----------------------------------------------------
+   Quelle icône afficher dépend du thème EFFECTIF, que le serveur ne connaît
+   pas. Plutôt que de le deviner en JavaScript au montage — ce qui provoque un
+   écart d'hydratation puis un clignotement — les deux icônes sont rendues et
+   c'est la même cascade CSS que ci-dessus qui en masque une.
+   -------------------------------------------------------------------------- */
+.only-dark { display: none; }
+.only-light { display: inline-flex; }
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .only-dark { display: inline-flex; }
+    :root:not([data-theme="light"]) .only-light { display: none; }
+}
+
+:root[data-theme="dark"] .only-dark { display: inline-flex; }
+:root[data-theme="dark"] .only-light { display: none; }
+
+/* --- Animations partagées ------------------------------------------------ */
+@keyframes rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pop-in {
+    0%   { opacity: 0; transform: scale(.82) rotate(-4deg); }
+    60%  { opacity: 1; transform: scale(1.04) rotate(1deg); }
+    100% { opacity: 1; transform: scale(1) rotate(0); }
+}
+@keyframes float-up {
+    0%   { opacity: 0; transform: translateY(6px) scale(.9); }
+    18%  { opacity: 1; transform: translateY(-2px) scale(1); }
+    100% { opacity: 0; transform: translateY(-46px) scale(1); }
+}
+@keyframes shake {
+    10%, 90% { transform: translateX(-2px); }
+    20%, 80% { transform: translateX(4px); }
+    30%, 50%, 70% { transform: translateX(-7px); }
+    40%, 60% { transform: translateX(7px); }
+}
+@keyframes pulse-ring {
+    0%   { box-shadow: 0 0 0 0 color-mix(in oklab, var(--gold) 55%, transparent); }
+    100% { box-shadow: 0 0 0 18px transparent; }
+}
+@keyframes sheen {
+    from { transform: translateX(-120%) skewX(-18deg); }
+    to   { transform: translateX(220%)  skewX(-18deg); }
+}
+
+.animate-rise    { animation: rise .5s cubic-bezier(.2,.7,.3,1) both; }
+.animate-pop-in  { animation: pop-in .34s cubic-bezier(.2,1.2,.4,1) both; }
+.animate-float-up{ animation: float-up 1.1s ease-out both; }
+.animate-shake   { animation: shake .5s cubic-bezier(.36,.07,.19,.97) both; }
+
+/* Chiffres alignés : indispensable pour un score qui change vite. */
+.tnum { font-variant-numeric: tabular-nums; }

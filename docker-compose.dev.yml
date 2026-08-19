@@ -1,0 +1,35 @@
+# Stack de dev de Push Your Luck — TOTALEMENT ISOLÉE du loup-garou.
+#   - nom de projet Docker distinct (games_*), réseau et volume dédiés
+#   - MySQL exposé sur 3307 (le loup-garou n'utilise que Postgres 5433 / Redis 6379)
+# Lancer :  docker compose -p pushyourluck -f docker-compose.dev.yml up -d
+services:
+
+  pyl_db:
+    image: mysql:8.4
+    container_name: pyl_db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: pushyourluck
+      MYSQL_USER: pushyourluck
+      MYSQL_PASSWORD: pushyourluck
+    ports:
+      # Lié à la boucle locale : les identifiants de développement sont dans ce
+      # fichier versionné, la base ne doit donc être joignable que depuis cette
+      # machine.
+      - "127.0.0.1:3307:3306"
+    volumes:
+      - ./mysql-data-dev:/var/lib/mysql
+    networks:
+      - pyl_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-upushyourluck", "-ppushyourluck"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+networks:
+  pyl_network:
+    name: pyl_network
+

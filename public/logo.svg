@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 64" width="300" height="64" role="img" aria-label="Push Your Luck">
+  <defs>
+    <linearGradient id="pylBgW" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1b1533"/>
+      <stop offset="1" stop-color="#08080c"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="url(#pylBgW)"/>
+  <g transform="translate(8 8) scale(2)" fill="none" stroke="#f5b544" stroke-width="2.6"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 7h6v6"/>
+    <path d="m22 7-8.5 8.5-5-5L2 17"/>
+  </g>
+  <text x="80" y="41" fill="#f4f4f6" font-size="26" font-weight="700" letter-spacing="-0.6"
+        font-family="Geist, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">Push Your Luck</text>
+</svg>
