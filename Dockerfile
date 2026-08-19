@@ -9,6 +9,18 @@ RUN npm ci --ignore-scripts
 # ── Construction ─────────────────────────────────────────────────────────────
 FROM node:26-alpine AS builder
 WORKDIR /app
+
+# Les variables `NEXT_PUBLIC_*` sont INLINÉES dans le bundle envoyé au
+# navigateur : les passer au démarrage du conteneur n'a aucun effet, il faut
+# les fournir ici. Une valeur absente donne simplement une fonctionnalité
+# désactivée — pas d'erreur de construction.
+ARG NEXT_PUBLIC_SITE_URL=https://pushyourluck.net
+ARG NEXT_PUBLIC_MATOMO_URL=""
+ARG NEXT_PUBLIC_MATOMO_SITE_ID=""
+ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL \
+    NEXT_PUBLIC_MATOMO_URL=$NEXT_PUBLIC_MATOMO_URL \
+    NEXT_PUBLIC_MATOMO_SITE_ID=$NEXT_PUBLIC_MATOMO_SITE_ID
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # Le client Prisma est généré, pas installé : sans cette étape, les imports

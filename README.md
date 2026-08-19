@@ -123,6 +123,37 @@ Les deux mots de passe sont **obligatoires** : le dépôt est public, aucune
 valeur de repli n'y figure et la stack refuse de démarrer sans eux. Données
 MySQL dans `./mysql-data`, sauvegardes dans `./dump` (bind mounts à la racine).
 
+### Activer la mesure d'audience en production
+
+Les variables `NEXT_PUBLIC_*` sont **inlinées dans le bundle du navigateur au
+moment de la construction** : les passer au démarrage du conteneur n'a aucun
+effet. Elles doivent être présentes dans le `.env` du serveur **avant** le
+`docker compose build`, qui les transmet en arguments de construction :
+
+```bash
+# .env du serveur
+NEXT_PUBLIC_SITE_URL=https://pushyourluck.net
+NEXT_PUBLIC_MATOMO_URL=https://matomo.leoderoin.fr
+NEXT_PUBLIC_MATOMO_SITE_ID=7
+```
+
+```bash
+docker compose -p pushyourluck up -d --build   # --build est indispensable
+```
+
+Trois garde-fous :
+
+- **le `.env` n'entre jamais dans l'image** (exclu du contexte) — Next le
+  recopie sinon tel quel dans la sortie `standalone` ;
+- **la mesure est coupée hors production**, même variables renseignées, pour
+  qu'un `npm run dev` ne compte pas de visites dans les chiffres réels ;
+- **la CSP ajoute l'hôte Matomo automatiquement** à partir de la même variable :
+  changer d'instance ne demande aucune modification de code.
+
+Vérifier après déploiement : `curl -sI https://pushyourluck.net | grep -i
+content-security-policy` doit mentionner ton instance, et une visite doit
+apparaître dans Matomo en temps réel.
+
 ### L'image de production
 
 **237 Mo**, contre 322 Mo pour un `Dockerfile` naïf. Trois décisions :

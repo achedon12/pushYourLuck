@@ -26,9 +26,32 @@ describe('mesure d’audience', () => {
     it('ne suit rien tant que les variables ne sont pas renseignées', async () => {
         vi.stubEnv('NEXT_PUBLIC_MATOMO_URL', '');
         vi.stubEnv('NEXT_PUBLIC_MATOMO_SITE_ID', '');
+        vi.stubEnv('NODE_ENV', 'production');
         vi.resetModules();
 
         const analytics = await import('./analytics');
         expect(analytics.isAnalyticsConfigured()).toBe(false);
+    });
+
+    it('ne suit rien hors production, même configurée', async () => {
+        // Sans ce garde-fou, chaque `npm run dev` compterait des vues dans les
+        // chiffres réels.
+        vi.stubEnv('NEXT_PUBLIC_MATOMO_URL', 'https://matomo.example.com');
+        vi.stubEnv('NEXT_PUBLIC_MATOMO_SITE_ID', '7');
+        vi.stubEnv('NODE_ENV', 'development');
+        vi.resetModules();
+
+        const analytics = await import('./analytics');
+        expect(analytics.isAnalyticsConfigured()).toBe(false);
+    });
+
+    it('suit en production quand les deux variables sont présentes', async () => {
+        vi.stubEnv('NEXT_PUBLIC_MATOMO_URL', 'https://matomo.example.com');
+        vi.stubEnv('NEXT_PUBLIC_MATOMO_SITE_ID', '7');
+        vi.stubEnv('NODE_ENV', 'production');
+        vi.resetModules();
+
+        const analytics = await import('./analytics');
+        expect(analytics.isAnalyticsConfigured()).toBe(true);
     });
 });

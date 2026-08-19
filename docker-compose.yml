@@ -22,7 +22,15 @@ services:
   pyl_node:
     container_name: pyl_node
     image: push-your-luck-app:latest
-    build: .
+    build:
+      context: .
+      # Ces valeurs partent dans le bundle du navigateur : elles doivent être
+      # connues à la CONSTRUCTION. Compose les lit dans le .env du serveur, qui
+      # n'entre lui-même jamais dans l'image.
+      args:
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-https://pushyourluck.net}
+        NEXT_PUBLIC_MATOMO_URL: ${NEXT_PUBLIC_MATOMO_URL:-}
+        NEXT_PUBLIC_MATOMO_SITE_ID: ${NEXT_PUBLIC_MATOMO_SITE_ID:-}
     env_file:
       - .env
     environment:

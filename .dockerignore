@@ -4,6 +4,13 @@
 #
 # Ne pas exclure `tests/` ni `scripts/` : `next build` type-vérifie le projet
 # entier, et `scripts/seed-test-db.ts` importe `tests/fixtures`.
+# Le .env ne doit JAMAIS entrer dans le contexte : Next le recopie tel quel
+# dans la sortie `standalone`, donc dans l'image finale. Les valeurs publiques
+# nécessaires à la construction passent par des ARG (voir Dockerfile).
+.env
+.env.*
+!.env.example
+
 node_modules
 .next
 .git

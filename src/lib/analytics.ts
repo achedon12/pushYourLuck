@@ -15,7 +15,13 @@
 export const MATOMO_URL = process.env.NEXT_PUBLIC_MATOMO_URL ?? '';
 export const MATOMO_SITE_ID = process.env.NEXT_PUBLIC_MATOMO_SITE_ID ?? '';
 
-export const isAnalyticsConfigured = () => MATOMO_URL !== '' && MATOMO_SITE_ID !== '';
+/**
+ * La mesure est coupée hors production, même variables renseignées : sans ce
+ * garde-fou, chaque `npm run dev` enverrait des vues à l'instance réelle et
+ * fausserait les chiffres avec du trafic de développement.
+ */
+export const isAnalyticsConfigured = () =>
+    MATOMO_URL !== '' && MATOMO_SITE_ID !== '' && process.env.NODE_ENV === 'production';
 
 /** Normalise l'URL de l'instance en une base terminée par un `/`. */
 export function trackerBase(url: string = MATOMO_URL): string {
