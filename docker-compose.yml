@@ -51,6 +51,8 @@ services:
       # produit « 127.0.0.13001 », que Docker rejette au démarrage.
       - "127.0.0.1:${PYL_HOST_PORT:-3001}:3000"
     depends_on:
+      # L'entrypoint du conteneur applique les migrations avant de démarrer
+      # Next : la base doit donc être joignable, pas seulement lancée.
       pyl_db:
         condition: service_healthy
     networks:
@@ -71,7 +73,6 @@ services:
       MYSQL_DATABASE: pushyourluck
       MYSQL_USER: pushyourluck
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:?MYSQL_PASSWORD est obligatoire}
-    # Pas de `ports:` en prod — la base ne sort pas du réseau Docker.
     volumes:
       - ./mysql-data:/var/lib/mysql
     networks:
@@ -83,6 +84,15 @@ services:
       retries: 10
       start_period: 30s
     restart: unless-stopped
+    # La base est publiée sur l'hôte pour pouvoir l'inspecter, la sauvegarder ou
+    # y jouer une migration depuis l'extérieur du réseau Docker.
+    #
+    # ⚠️ Sans adresse devant, Docker écoute sur TOUTES les interfaces, et il
+    # écrit sa règle directement dans nftables — donc EN AMONT d'UFW : un
+    # `ufw deny 3307` ne la bloquera pas. Préfixer par `127.0.0.1:` la
+    # réserverait au serveur, où un tunnel SSH suffit à l'atteindre.
+    ports:
+      - "3307:3306"
 
 networks:
   pyl_network:

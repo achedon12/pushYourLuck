@@ -9,7 +9,7 @@
     "lint": "eslint",
     "db:up": "docker compose -p pushyourluck -f docker-compose.dev.yml up -d",
     "db:down": "docker compose -p pushyourluck -f docker-compose.dev.yml down",
-    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "sim": "tsx scripts/simulate.ts",
     "smoke": "tsx scripts/smoke-scores.ts",

@@ -27,6 +27,52 @@ COPY . .
 # `@/generated/prisma` ne compilent pas.
 RUN npx prisma generate && npm run build
 
+# ── CLI de migration ─────────────────────────────────────────────────────────
+# Les migrations sont jouées au DÉMARRAGE du conteneur applicatif, par
+# l'entrypoint. Elles ne peuvent pas l'être pendant `docker build` : aucune
+# base n'est joignable à ce moment-là, et c'est délibéré — la construction a
+# justement été rendue indépendante de la base pour que le .env puisse sortir
+# de l'image.
+#
+# La CLI est installée dans son PROPRE arbre, sous /opt/prisma, et non dans
+# celui de l'application. Fusionner les deux `node_modules` écraserait des
+# paquets @prisma/* dont la sortie standalone a besoin pour servir les
+# requêtes, avec les versions que traîne la CLI.
+#
+# Le moteur de schéma est un binaire lié à la plateforme : celui d'un poste de
+# développement Debian/Ubuntu est compilé pour glibc et ne s'exécuterait pas
+# sur Alpine. C'est le script d'installation de Prisma qui télécharge la
+# variante musl — d'où le seul `npm install` du Dockerfile à ne pas passer
+# `--ignore-scripts`.
+FROM node:26-alpine AS prisma-cli
+WORKDIR /opt/prisma
+
+COPY package-lock.json ./
+# Prisma est une dépendance de DÉVELOPPEMENT : un `npm ci` complet installerait
+# aussi Playwright, dont l'installation télécharge des navigateurs. On ne prend
+# donc que la CLI, à la version EXACTE du verrou — une CLI qui dériverait du
+# client généré appliquerait un SQL que le client ne sait pas interroger.
+#
+# La CLI pèse 252 Mo à elle seule (elle embarque Studio, `effect` et
+# `@electric-sql`). Vérifié : en retirer quoi que ce soit, même le seul
+# `@prisma/studio-core`, fait échouer `migrate deploy` — son build les importe
+# tous au chargement. C'est à prendre ou à laisser.
+#
+# Le nettoyage du cache doit rester dans CE `RUN` : une couche Docker ne se
+# soustrait pas, supprimer le cache ensuite laisserait ses 500 Mo dans l'image
+# malgré leur absence du système de fichiers final.
+RUN PRISMA_VERSION="$(node -p "require('./package-lock.json').packages['node_modules/prisma'].version")" \
+    && rm package-lock.json \
+    && npm init -y > /dev/null \
+    && npm install --no-audit --no-fund --loglevel=error "prisma@${PRISMA_VERSION}" dotenv \
+    && npm cache clean --force
+
+# `dotenv` accompagne la CLI parce que prisma.config.ts l'importe : c'est ce
+# fichier qui porte l'URL de la base, le schéma ne la déclare pas. Les chemins
+# qu'il contient sont relatifs, d'où le `cd /opt/prisma` de l'entrypoint.
+COPY prisma.config.ts ./
+COPY prisma ./prisma
+
 # ── Binaire Node allégé ──────────────────────────────────────────────────────
 # Le binaire officiel embarque ses tables de symboles : 20 Mo qui ne servent
 # qu'à déboguer un plantage natif de Node lui-même. Les traces JavaScript, elles,
@@ -62,6 +108,19 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# La CLI de migration, son moteur musl, le schéma et les migrations. Hors de
+# /app, pour ne pas se mélanger au `node_modules` de la sortie standalone.
+COPY --from=prisma-cli /opt/prisma /opt/prisma
+
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Coupe l'appel de vérification de version que Prisma passe au démarrage : en
+# production il ne sert à rien, et il ajoute une latence — voire un échec — au
+# lancement quand le conteneur n'a pas de sortie réseau.
+ENV CHECKPOINT_DISABLE=1
+
 USER nextjs
 EXPOSE 3000
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["node", "server.js"]

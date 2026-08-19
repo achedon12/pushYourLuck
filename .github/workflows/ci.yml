@@ -56,7 +56,9 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx prisma generate
-      - run: npx prisma db push
+      # `migrate deploy`, comme en production : la CI éprouve ainsi le SQL
+      # réellement déployé et non une projection du schéma.
+      - run: npx prisma migrate deploy
       - run: npx playwright install --with-deps chromium
       - run: npm run test:functional
       - uses: actions/upload-artifact@v4
