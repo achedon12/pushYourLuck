@@ -21,7 +21,7 @@ manches longues. La valeur `BANK_GROWTH` a été calibrée par simulation : voir
 ```bash
 npm run db:up        # MySQL 8.4 sur le port 3307 (données dans ./mysql-data-dev)
 npx prisma generate  # prérequis : le client Prisma est généré, pas installé
-npm run db:push      # crée la table Score
+npm run db:migrate   # applique les migrations (crée la table Score)
 npm run dev          # http://localhost:3001
 
 # Une seule fois, pour pouvoir lancer les tests fonctionnels et visuels :
@@ -55,11 +55,11 @@ npx playwright install chromium
 | `npm run test:functional` | parcours réels (Playwright + base de test) |
 | `npm run test:visual` | captures de référence et débordements mobiles |
 | `npm run test:visual:update` | régénère les captures après un changement voulu |
-| `npm run db:test:setup` | crée la base `pushyourluck_test` et y applique le schéma |
+| `npm run db:test:setup` | repose la base `pushyourluck_test` et y joue les migrations |
 | `npm run backup` | sauvegarde manuelle de la base dans `dump/` |
 | `npm run seed:history` | remplit la base de DEV d'un historique fictif (calendrier) |
 | `npm run db:up` / `db:down` | base de développement |
-| `npm run db:push` / `db:studio` | schéma et exploration |
+| `npm run db:migrate` / `db:studio` | migrations et exploration |
 
 ## Architecture
 
@@ -94,9 +94,25 @@ commune, la validation anti-triche par rejeu, et l'équilibrage par simulation.
   sont conservées. Le cron est **désactivé hors production**.
 - **Restauration** :
   `gunzip -c dump/pushyourluck-….sql.gz | docker exec -i pyl_db mysql -upushyourluck -p pushyourluck`
+- **API des scores** : trois défenses distinctes, qui ne se remplacent pas.
+  1. **Le score n'est jamais lu depuis la requête** — le serveur rejoue les
+     actions envoyées depuis la graine du jour et recalcule (`replay.ts`).
+     Annoncer `"score": 999999` ne donne rien : le champ est ignoré.
+  2. **Origine vérifiée sur les écritures** (`src/lib/origin.ts`) — un POST
+     sans `Origin`, ou venant d'un autre domaine, est refusé (403). Cela
+     protège d'un site tiers qui ferait poster ton visiteur à son insu depuis
+     son navigateur ; **cela n'arrête pas un `curl`**, qui pose l'en-tête qu'il
+     veut. Aucune vérification d'origine ne le peut.
+  3. **Quota par appelant** (`rateLimit.ts`) — 20 envois par quart d'heure.
+     C'est la seule chose qui borne un robot jouant de vraies parties : le
+     moteur est déterministe et public, donc un score optimal est calculable.
+     L'appelant est identifié par `x-real-ip`, à défaut par la **dernière**
+     valeur de `x-forwarded-for` — jamais la première, qui vient du client.
+  La lecture du classement (`GET`) reste publique : elle est affichée sur le
+  site, la fermer ne protégerait rien.
 - **Pseudos** : `src/lib/nameFilter.ts` refuse côté serveur les insultes, les
   usurpations (`admin`, `staff`…) et leurs contournements courants (chiffres à
-  la place des lettres, lettres espacées, répétitions). `npm run names` vérifie
+  la place des lettres, lettres espacées, répétitions). `npx vitest run src/lib/nameFilter.test.ts` vérifie
   autant les refus que les **faux positifs** — un filtre qui bloque « Cassandra »
   fait plus de dégâts qu'un gros mot.
 - **Une instance à la fois** : le cron tourne dans le processus applicatif. Le
@@ -122,6 +138,34 @@ MYSQL_PASSWORD=… MYSQL_ROOT_PASSWORD=… docker compose -p pushyourluck up -d 
 Les deux mots de passe sont **obligatoires** : le dépôt est public, aucune
 valeur de repli n'y figure et la stack refuse de démarrer sans eux. Données
 MySQL dans `./mysql-data`, sauvegardes dans `./dump` (bind mounts à la racine).
+
+### Le schéma de la base
+
+**Les migrations sont jouées par l'entrypoint du conteneur applicatif**
+(`docker-entrypoint.sh`), avant que Next ne démarre. Rien à lancer à la main :
+un déploiement applique ce qui est en attente, et `migrate deploy` ne fait rien
+quand tout est déjà appliqué.
+
+Si une migration échoue, le conteneur **s'arrête** au lieu de servir
+l'application. C'est délibéré : Next démarre parfaitement sur une base sans
+table, le healthcheck passe, et la panne n'apparaît qu'à la première requête
+d'un visiteur — « The table `Score` does not exist ». Mieux vaut un conteneur
+qui refuse de démarrer qu'un site qui répond 500 en silence.
+
+La CLI Prisma et son moteur de schéma vivent dans `/opt/prisma`, à l'écart du
+`node_modules` de la sortie standalone : les fusionner écraserait des paquets
+`@prisma/*` dont l'application a besoin pour servir les requêtes. Ils coûtent
+252 Mo dans l'image — la CLI embarque Studio, `effect` et `@electric-sql`, et
+en retirer ne serait-ce que `@prisma/studio-core` fait échouer `migrate deploy`
+(son build les importe tous au chargement).
+
+**Base déjà peuplée sans historique de migration** (cas d'un schéma posé jadis
+par `db push`) : la marquer comme déjà appliquée plutôt que la rejouer, sans
+quoi `migrate deploy` échouera en voulant recréer une table existante.
+
+```bash
+DATABASE_URL="mysql://…" npx prisma migrate resolve --applied 0_init
+```
 
 ### Activer la mesure d'audience en production
 
