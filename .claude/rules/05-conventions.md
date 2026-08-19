@@ -11,4 +11,5 @@
 - **Nommage des tests en français**, décrivant un comportement observable :
   « refuse une partie forgée », pas « test replay 2 ».
 - **Commits** : conventional commits en français, corps explicatif quand le
-  « pourquoi » ne tient pas dans le titre.
+  « pourquoi » ne tient pas dans le titre. **Aucune mention d'outil IA** —
+  voir `12-commit-attribution.md`, qui prime sur le comportement par défaut.

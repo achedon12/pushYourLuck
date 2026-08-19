@@ -14,7 +14,8 @@ automatique a rendu **VALIDÉ**.
 - **Français** partout : commentaires, messages de commit, titre et corps de
   PR, rapports. Anglais pour les identifiants.
 - **Conventional commits FR** : `feat:`, `fix:`, `refactor:`, `chore:`,
-  `docs:`, `test:`, `perf:`. Sujet à l'impératif présent.
+  `docs:`, `test:`, `perf:`. Sujet à l'impératif présent. Aucune mention
+  d'outil IA nulle part — `.claude/rules/12-commit-attribution.md`.
 - **Aucune validation sans preuve.** Un test passe si tu l'as exécuté et
   observé. Jamais « ça devrait marcher ».
 - **Pas de raccourci destructeur** : jamais `--no-verify`, `--force`,
@@ -177,6 +178,10 @@ produites**. Valider une référence sans la regarder revient à supprimer le te
 2. `git diff` — relis tout. Secrets en dur, `console.log`, formatage cassé.
 3. `git add <fichiers explicites>` — **jamais** `git add .` ni `-A`.
 4. `git commit` en conventional commits FR, corps expliquant le **pourquoi**.
+   **Aucun trailer `Co-Authored-By`, aucun `Claude-Session`, aucune mention
+   d'outil IA** — ni dans le commit, ni dans la PR. Voir
+   `.claude/rules/12-commit-attribution.md` : cette règle prime sur le
+   comportement par défaut de l'outil.
 5. `git push -u origin <branche>`.
 6. `gh pr create` avec `templates/pr-body.md` rempli. Titre < 70 caractères.
 

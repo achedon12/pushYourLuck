@@ -31,6 +31,7 @@ Ce dossier porte les consignes, skills et agents propres au dépôt.
 | `09-ops.md` | cron, sauvegardes, image, construction vs exécution |
 | `10-gotchas.md` | pièges qui ont déjà coûté du temps |
 | `11-comments.md` | le pourquoi, jamais le quoi |
+| `12-commit-attribution.md` | **aucune mention d'outil IA** dans les commits et les PR |
 
 ## Les skills
 

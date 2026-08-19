@@ -32,3 +32,4 @@ par simulation.
 @.claude/rules/09-ops.md
 @.claude/rules/10-gotchas.md
 @.claude/rules/11-comments.md
+@.claude/rules/12-commit-attribution.md
