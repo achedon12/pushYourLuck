@@ -35,13 +35,22 @@ const nextConfig: NextConfig = {
         // passe pas par un proxy à la requête. La politique garde tout son sens
         // malgré ça — elle interdit les scripts d'hôtes tiers, et `connect-src`
         // empêche l'exfiltration vers un serveur arbitraire.
+
+        // En DÉVELOPPEMENT seulement : `next dev` évalue les modules et les
+        // cartes de source via `eval()` pour le rechargement à chaud. Sans cette
+        // exception, la console n'affiche que « eval() is not supported in this
+        // environment » et rien ne s'hydrate. En production le bundle n'appelle
+        // jamais `eval()` : l'autoriser là-bas rouvrirait précisément la porte
+        // que cette politique referme.
+        const devEval = process.env.NODE_ENV === 'production' ? '' : " 'unsafe-eval'";
+
         const csp = [
             "default-src 'self'",
             "base-uri 'self'",
             "form-action 'self'",
             "frame-ancestors 'self'",
             "object-src 'none'",
-            allow("script-src 'self' 'unsafe-inline'"),
+            allow(`script-src 'self' 'unsafe-inline'${devEval}`),
             // Tailwind pose des styles en ligne ; aucune source externe.
             "style-src 'self' 'unsafe-inline'",
             allow("img-src 'self' data: blob:"),

@@ -18,6 +18,10 @@ test.describe('en-têtes de sécurité', () => {
         // c'est ce qui empêche une dépendance compromise d'exfiltrer.
         expect(csp).toContain("connect-src 'self'");
         expect(csp).not.toMatch(/connect-src[^;]*https?:\/\//);
+        // `'unsafe-eval'` est concédé à `next dev`, qui charge ses modules par
+        // `eval()`. Ces tests tournent sur une construction de production : l'y
+        // trouver signifierait que la concession a fui hors du développement.
+        expect(csp).not.toContain("'unsafe-eval'");
     });
 
     test('pose les autres en-têtes attendus', async ({ request }) => {

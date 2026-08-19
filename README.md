@@ -134,7 +134,7 @@ effet. Elles doivent être présentes dans le `.env` du serveur **avant** le
 # .env du serveur
 NEXT_PUBLIC_SITE_URL=https://pushyourluck.net
 NEXT_PUBLIC_MATOMO_URL=https://matomo.leoderoin.fr
-NEXT_PUBLIC_MATOMO_SITE_ID=7
+NEXT_PUBLIC_MATOMO_SITE_ID=6
 ```
 
 ```bash
@@ -150,9 +150,26 @@ Trois garde-fous :
 - **la CSP ajoute l'hôte Matomo automatiquement** à partir de la même variable :
   changer d'instance ne demande aucune modification de code.
 
-Vérifier après déploiement : `curl -sI https://pushyourluck.net | grep -i
-content-security-policy` doit mentionner ton instance, et une visite doit
-apparaître dans Matomo en temps réel.
+Vérifier après déploiement, dans cet ordre — les deux premiers points sont
+servis par le **runtime** et peuvent être verts alors que rien n'est compté,
+puisque l'identifiant du site part, lui, dans le bundle à la **construction** :
+
+```bash
+# 1. La CSP mentionne bien l'instance
+curl -sI https://pushyourluck.net | grep -i content-security-policy
+
+# 2. L'identifiant de site existe côté Matomo — 200 attendu.
+#    Un site inconnu répond 400 et la visite est jetée en silence : ni la
+#    console du navigateur ni la CSP ne le signalent.
+curl -so /dev/null -w '%{http_code}\n' \
+  "https://matomo.leoderoin.fr/matomo.php?idsite=6&rec=1&url=https%3A%2F%2Fpushyourluck.net%2F&action_name=probe&rand=1&apiv=1"
+
+# 3. L'identifiant réellement inliné dans le bundle est celui attendu
+curl -s https://pushyourluck.net | grep -oE '/_next/static/chunks/[^"]+\.js' | sort -u \
+  | while read -r c; do curl -s "https://pushyourluck.net$c"; done | grep -o 'MATOMO_SITE_ID[^,]*,[^,]*,"[0-9]*"'
+```
+
+Puis une visite doit apparaître dans Matomo en temps réel.
 
 ### L'image de production
 
