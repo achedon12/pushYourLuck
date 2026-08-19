@@ -34,7 +34,14 @@ services:
       # sans ce montage, elles disparaîtraient à chaque redéploiement.
       - ./dump:/app/dump
     ports:
-      - "${PYL_HOST_PORT:-3001}:3000"
+      # Lié à la boucle locale : le conteneur n'est joignable que par le proxy
+      # inverse installé sur la même machine. Sans ça, n'importe qui peut
+      # atteindre http://serveur:3001 et court-circuiter nginx — donc le TLS,
+      # la limitation de débit et les journaux d'accès.
+      #
+      # ⚠️ Le deux-points après l'adresse est obligatoire : « 127.0.0.1${PORT} »
+      # produit « 127.0.0.13001 », que Docker rejette au démarrage.
+      - "127.0.0.1:${PYL_HOST_PORT:-3001}:3000"
     depends_on:
       pyl_db:
         condition: service_healthy
