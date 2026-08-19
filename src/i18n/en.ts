@@ -118,6 +118,8 @@ export const en: Dictionary = {
             blocked_name: 'that name is not allowed, please pick another',
             invalid_client: 'invalid browser identifier',
             invalid_seed: 'invalid deck',
+            too_many_requests: 'too many submissions in a short time, try again in a few minutes',
+            payload_too_large: 'request too large',
             replay_rejected: 'game rejected by the server check',
         },
         share: 'Share',

@@ -17,10 +17,13 @@ vi.mock('@/lib/prisma', () => ({ prisma: prismaMock }));
 
 const { POST, GET } = await import('./route');
 
-const post = (body: unknown) =>
+let ipCounter = 0;
+
+/** Chaque appel part d'une IP distincte, sinon le quota fausse les autres cas. */
+const post = (body: unknown, ip = `test-ip-${ipCounter++}`) =>
     POST(new Request('http://localhost/api/scores', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-forwarded-for': ip },
         body: JSON.stringify(body),
     }));
 
@@ -79,6 +82,44 @@ describe('POST /api/scores', () => {
         await post({ ...valid, name: 'connard' });
         await post(valid);
         expect(prismaMock.score.upsert).not.toHaveBeenCalled();
+    });
+
+    it('refuse au-delà du quota, avec un délai d’attente', async () => {
+        const ip = 'ip-quota';
+        for (let i = 0; i < 20; i++) await post(valid, ip);
+
+        const refused = await post(valid, ip);
+        expect(refused.status).toBe(429);
+        await expect(refused.json()).resolves.toEqual({ error: 'too_many_requests' });
+        expect(Number(refused.headers.get('Retry-After'))).toBeGreaterThan(0);
+    });
+
+    it('ne pénalise pas les autres appelants', async () => {
+        const ip = 'ip-bruyant';
+        for (let i = 0; i < 25; i++) await post(valid, ip);
+
+        // L'inondation d'un joueur ne doit pas fermer le classement aux autres.
+        expect((await post(valid, 'ip-tranquille')).status).toBe(422);
+    });
+
+    it('refuse un corps trop volumineux avant de le lire', async () => {
+        const res = await POST(new Request('http://localhost/api/scores', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'content-length': String(2 * 1024 * 1024),
+                'x-forwarded-for': 'ip-gros-corps',
+            },
+            body: JSON.stringify(valid),
+        }));
+        expect(res.status).toBe(413);
+    });
+
+    it('refuse un pseudo qui n’est pas une chaîne', async () => {
+        // `String({})` donnait « [object Object] », qui franchissait le filtre.
+        const res = await post({ ...valid, name: { $ne: null } });
+        expect(res.status).toBe(400);
+        await expect(res.json()).resolves.toEqual({ error: 'invalid_name' });
     });
 
     it('ne renvoie jamais la raison détaillée d’un rejet de rejeu', async () => {

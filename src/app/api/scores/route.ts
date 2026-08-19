@@ -2,10 +2,25 @@ import { prisma } from '@/lib/prisma';
 import { dayKey, dailySeed } from '@/lib/daily';
 import { replay } from '@/games/push-your-luck/replay';
 import { checkName } from '@/lib/nameFilter';
+import { RateLimiter, clientKey } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
 const GAME = 'push-your-luck';
+
+/**
+ * Une partie complète dure au minimum une poignée de secondes : vingt envois
+ * par quart d'heure laissent largement respirer un joueur en mode libre, tout
+ * en rendant l'inondation du classement inopérante.
+ */
+const submitLimiter = new RateLimiter(20, 15 * 60 * 1000);
+
+/**
+ * La taille du corps est bornée AVANT lecture : `MAX_ACTIONS` protège le
+ * rejeu, pas la mémoire consommée à l'analyse d'un corps de plusieurs mégaoctets.
+ * 16 ko couvrent très largement la plus longue partie possible.
+ */
+const MAX_BODY_BYTES = 16 * 1024;
 const MODES = ['daily', 'free'] as const;
 type Mode = (typeof MODES)[number];
 
@@ -38,6 +53,19 @@ interface SubmitBody {
 }
 
 export async function POST(request: Request) {
+    const limit = submitLimiter.check(clientKey(request));
+    if (!limit.allowed) {
+        return Response.json(
+            { error: 'too_many_requests' },
+            { status: 429, headers: { 'Retry-After': String(limit.retryAfter) } },
+        );
+    }
+
+    const declared = Number(request.headers.get('content-length') ?? 0);
+    if (declared > MAX_BODY_BYTES) {
+        return Response.json({ error: 'payload_too_large' }, { status: 413 });
+    }
+
     let body: SubmitBody;
     try {
         body = await request.json();
@@ -106,6 +134,9 @@ export async function POST(request: Request) {
  * bizarre n'entre en base.
  */
 function cleanName(raw: unknown): string | null {
-    const name = String(raw ?? '').trim().replace(/[^\p{L}\p{N} _.'-]/gu, '').slice(0, 20);
+    // Un type non textuel est refusé plutôt que converti : `String({})` donne
+    // « [object Object] », qui franchissait le filtre sans rien vouloir dire.
+    if (typeof raw !== 'string') return null;
+    const name = raw.trim().replace(/[^\p{L}\p{N} _.'-]/gu, '').slice(0, 20);
     return name.length >= 2 ? name : null;
 }

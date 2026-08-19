@@ -30,7 +30,6 @@
     "lucide-react": "^1.33.0",
     "next": "16.3.1",
     "node-cron": "^4.6.0",
-    "prisma": "^7.9.1",
     "react": "19.2.8",
     "react-dom": "19.2.8"
   },
@@ -43,11 +42,15 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.1",
+    "prisma": "^7.9.1",
     "sharp": "^0.35.3",
     "tailwindcss": "^4",
     "tsx": "^4.23.12",
     "typescript": "^5",
     "vitest": "^4.1.11"
   },
-  "description": "Push Your Luck \u2014 jeu de risque et de deck, sur pushyourluck.net"
+  "description": "Push Your Luck — jeu de risque et de deck, sur pushyourluck.net",
+  "overrides": {
+    "deepmerge-ts": "^8.0.1"
+  }
 }

@@ -70,12 +70,19 @@ export async function* dumpScores(): AsyncGenerator<string> {
 }
 
 export async function createBackup(): Promise<string> {
-    await mkdir(BACKUP_DIR, { recursive: true });
+    // 0700 sur le dossier, 0600 sur le fichier : un dump contient les pseudos
+    // de tous les joueurs, il n'a pas à être lisible par les autres comptes de
+    // la machine.
+    await mkdir(BACKUP_DIR, { recursive: true, mode: 0o700 });
 
     const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
     const file = path.join(BACKUP_DIR, `pushyourluck-${stamp}.sql.gz`);
 
-    await pipeline(Readable.from(dumpScores()), createGzip({ level: 9 }), createWriteStream(file));
+    await pipeline(
+        Readable.from(dumpScores()),
+        createGzip({ level: 9 }),
+        createWriteStream(file, { mode: 0o600 }),
+    );
     await pruneBackups();
 
     console.log(`[backup] ${path.basename(file)}`);

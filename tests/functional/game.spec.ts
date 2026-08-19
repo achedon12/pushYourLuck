@@ -21,17 +21,22 @@ async function startFreeGame(page: Page) {
  */
 async function drawUntilBankable(page: Page) {
     const bank = page.getByRole('button', { name: /^Encaisser/ });
+    const replay = page.getByRole('button', { name: 'Rejouer' });
 
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 60; i++) {
         if (await bank.isEnabled().catch(() => false)) return;
-        if (await page.getByRole('button', { name: 'Rejouer' }).isVisible().catch(() => false)) {
+        if (await replay.isVisible().catch(() => false)) {
             await startFreeGame(page);
             continue;
         }
         await page.keyboard.press('Space');
+        // La fin de partie n'affiche son récapitulatif qu'après une animation :
+        // pendant ce délai le plateau est encore là mais n'accepte plus rien.
+        // Sans cette pause, la boucle tourne à vide et épuise son budget.
+        await page.waitForTimeout(60);
     }
 
-    throw new Error('impossible d’atteindre un pot encaissable en 40 tirages');
+    throw new Error('impossible d’atteindre un pot encaissable en 60 tirages');
 }
 
 test.describe('parcours de jeu', () => {

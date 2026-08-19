@@ -121,6 +121,8 @@ export const fr = {
             blocked_name: 'ce pseudo n’est pas autorisé, choisis-en un autre',
             invalid_client: 'identifiant de navigateur invalide',
             invalid_seed: 'paquet invalide',
+            too_many_requests: 'trop d’envois en peu de temps, réessaie dans quelques minutes',
+            payload_too_large: 'requête trop volumineuse',
             replay_rejected: 'partie refusée par la vérification du serveur',
         },
         share: 'Partager',
