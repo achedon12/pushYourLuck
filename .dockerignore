@@ -1,6 +1,17 @@
+# Ces exclusions n'allègent PAS l'image finale — seules `.next/standalone`,
+# `.next/static` et `public` y sont copiées. Elles réduisent le contexte
+# transféré au démon Docker, donc le temps de construction.
+#
+# Ne pas exclure `tests/` ni `scripts/` : `next build` type-vérifie le projet
+# entier, et `scripts/seed-test-db.ts` importe `tests/fixtures`.
 node_modules
 .next
 .git
+.github
 mysql-data
 mysql-data-dev
+dump
+test-results
+playwright-report
+blob-report
 *.log

@@ -116,10 +116,31 @@ de production tournent sur la même machine, poser `PYL_HOST_PORT=3005` dans le
 ## Déploiement
 
 ```bash
-docker compose -p pushyourluck up -d --build
+MYSQL_PASSWORD=… MYSQL_ROOT_PASSWORD=… docker compose -p pushyourluck up -d --build
 ```
 
-Données MySQL dans `./mysql-data` (bind mount à la racine du projet).
+Les deux mots de passe sont **obligatoires** : le dépôt est public, aucune
+valeur de repli n'y figure et la stack refuse de démarrer sans eux. Données
+MySQL dans `./mysql-data`, sauvegardes dans `./dump` (bind mounts à la racine).
+
+### L'image de production
+
+**237 Mo**, contre 322 Mo pour un `Dockerfile` naïf. Trois décisions :
+
+| Levier | Gain |
+|---|---|
+| `alpine` nue + binaire Node recopié, au lieu de `node:26-alpine` | −59 Mo |
+| Binaire Node débarrassé de ses symboles de débogage | −20 Mo |
+| `sharp` et `@img` exclus du traçage (aucun `next/image` dans le projet) | −19 Mo |
+
+Ce qui reste est incompressible : le binaire Node pèse 128 Mo à lui seul, ICU
+complet inclus — indispensable au formatage des dates en français.
+
+**Servir le build depuis nginx n'est pas possible** : l'application a besoin de
+Node à la requête pour l'API de scores (validation anti-triche par rejeu), pour
+le classement rendu à la demande, et pour le cron de sauvegarde. Nginx a sa
+place *devant* — TLS, cache des fichiers statiques, limitation de débit — mais
+pas *à la place*.
 
 ## Contribuer
 

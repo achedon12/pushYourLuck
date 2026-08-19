@@ -11,6 +11,18 @@ const nextConfig: NextConfig = {
     // qui ignore cette sortie et le signale à chaque démarrage.
     output: process.env.NEXT_DISABLE_STANDALONE === '1' ? undefined : 'standalone',
     poweredByHeader: false,
+    // Aucun `next/image` dans le projet : les seules images sont des PNG servis
+    // tels quels et des SVG en ligne. Laisser l'optimiseur actif embarquait
+    // `sharp` et ses binaires `@img` — 19 Mo — dans l'image de production, pour
+    // une fonctionnalité jamais appelée.
+    images: { unoptimized: true },
+    // `sharp` est une dépendance de DÉVELOPPEMENT (export des logos), mais Next
+    // la trace quand même : elle est présente dans node_modules au moment de la
+    // construction. L'exclure explicitement retire 19 Mo de binaires `@img` de
+    // l'image finale. Sans danger ici puisque `next/image` n'est jamais employé.
+    outputFileTracingExcludes: {
+        '*': ['node_modules/sharp/**', 'node_modules/@img/**'],
+    },
     compress: true,
     async headers() {
         // L'hôte Matomo doit être autorisé explicitement, sinon la CSP bloque
