@@ -277,9 +277,11 @@ export const fr = {
             'Le nom et les coordonnées de l’hébergeur sont communiqués sur simple demande à l’adresse ci-dessus.',
         ipTitle: 'Propriété intellectuelle',
         ipBody:
-            'Les règles, textes, visuels et le code du jeu sont l’œuvre de l’éditeur. ' +
-            'Les icônes proviennent de la bibliothèque Lucide, distribuée sous licence ISC. ' +
-            'Toute reproduction du contenu du site sans autorisation est interdite.',
+            'Le code source du jeu est publié sous licence MIT et librement réutilisable : ' +
+            'il est disponible sur GitHub. Cette licence ne concède en revanche aucun droit ' +
+            'sur le nom « Push Your Luck » ni sur l’identité visuelle du site, qui restent la ' +
+            'propriété de l’éditeur. Les icônes proviennent de la bibliothèque Lucide, ' +
+            'distribuée sous licence ISC.',
         liabilityTitle: 'Responsabilité',
         liabilityBody:
             'Le jeu est fourni tel quel, sans garantie de disponibilité. L’éditeur ne saurait être ' +

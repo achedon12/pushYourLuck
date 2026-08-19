@@ -1,0 +1,30 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    # Les mises à jour de correctifs et mineures sont regroupées : cinq PR par
+    # semaine pour des bumps de patch n'apportent rien et finissent ignorées.
+    groups:
+      mineures-et-correctifs:
+        update-types: ['minor', 'patch']
+    commit-message:
+      prefix: 'chore'
+      include: scope
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: 'chore'
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: 'chore'

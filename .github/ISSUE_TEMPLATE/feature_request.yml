@@ -1,0 +1,28 @@
+name: Idée
+description: Proposer une fonctionnalité ou une amélioration
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Le problème
+      description: Qu'est-ce qui te manque, ou qu'est-ce qui te gêne aujourd'hui ?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Ce que tu proposes
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Ce que tu as envisagé d'autre
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Portée
+      options:
+        - label: Cette idée touche à l'équilibrage du jeu (elle demandera un passage par `npm run sim`)
+        - label: Cette idée ajoute du texte visible (il faudra le français ET l'anglais)

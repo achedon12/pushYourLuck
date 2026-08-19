@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Faille de sécurité
+    url: https://github.com/achedon12/pushYourLuck/security/advisories/new
+    about: Ne jamais signaler une faille dans une issue publique — passe par un avis privé.
+  - name: Jouer
+    url: https://pushyourluck.net
+    about: Le jeu en ligne.

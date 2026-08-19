@@ -273,9 +273,10 @@ export const en: Dictionary = {
             'details of the host are available on request at the address above.',
         ipTitle: 'Intellectual property',
         ipBody:
-            'The rules, texts, visuals and code of the game are the work of the publisher. Icons come ' +
-            'from the Lucide library, distributed under the ISC licence. Reproducing the contents of ' +
-            'this site without permission is prohibited.',
+            'The source code of the game is released under the MIT licence and free to reuse: ' +
+            'it is available on GitHub. That licence grants no right, however, over the name ' +
+            '“Push Your Luck” or the visual identity of the site, which remain the property of ' +
+            'the publisher. Icons come from the Lucide library, distributed under the ISC licence.',
         liabilityTitle: 'Liability',
         liabilityBody:
             'The game is provided as is, with no guarantee of availability. The publisher cannot be ' +

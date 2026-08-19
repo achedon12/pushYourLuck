@@ -120,3 +120,15 @@ docker compose -p pushyourluck up -d --build
 ```
 
 Données MySQL dans `./mysql-data` (bind mount à la racine du projet).
+
+## Contribuer
+
+Les contributions sont bienvenues — lis [CONTRIBUTING.md](CONTRIBUTING.md)
+d'abord, en particulier la règle « une fonctionnalité = un test ». Pour une
+faille de sécurité, passe par [SECURITY.md](SECURITY.md), jamais par une issue
+publique.
+
+## Licence
+
+[MIT](LICENSE). La licence porte sur le code : elle ne concède aucun droit sur
+le nom « Push Your Luck » ni sur l'identité visuelle du site.
