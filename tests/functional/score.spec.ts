@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { seedTestDatabase, FIXTURE_PLAYERS } from '../fixtures';
+import { seedTestDatabase, FIXTURE_PLAYERS, SITE_ORIGIN } from '../fixtures';
 import { createRun, draw, bank, chooseOffer, readDeck } from '../../src/games/push-your-luck/engine';
 import { dailySeed } from '../../src/lib/daily';
 
@@ -31,7 +31,9 @@ function playRun(seed: number, threshold: number): string {
 
 const submit = (body: Record<string, unknown>) => ({
     data: body,
-    headers: { 'Content-Type': 'application/json' },
+    // `Origin` n'est pas décoratif : la route refuse une écriture qui ne vient
+    // pas du site. Un navigateur le pose seul, un client d'API doit l'imiter.
+    headers: { 'Content-Type': 'application/json', Origin: SITE_ORIGIN },
 });
 
 test.describe('envoi d’un score', () => {

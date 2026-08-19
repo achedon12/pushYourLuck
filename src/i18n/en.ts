@@ -121,6 +121,7 @@ export const en: Dictionary = {
             too_many_requests: 'too many submissions in a short time, try again in a few minutes',
             payload_too_large: 'request too large',
             replay_rejected: 'game rejected by the server check',
+            forbidden_origin: 'submission refused: it did not come from the site',
         },
         share: 'Share',
         shared: 'Copied',

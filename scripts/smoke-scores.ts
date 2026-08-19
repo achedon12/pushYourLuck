@@ -28,7 +28,9 @@ function botRun(seed: number, threshold: number) {
 async function post(body: unknown) {
     const res = await fetch(`${BASE}/api/scores`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        // La route refuse les écritures sans origine : ce script imite ce que
+        // le navigateur pose de lui-même depuis une page du site.
+        headers: { 'Content-Type': 'application/json', Origin: new URL(BASE).origin },
         body: JSON.stringify(body),
     });
     return { status: res.status, body: await res.text() };

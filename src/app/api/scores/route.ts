@@ -3,6 +3,7 @@ import { dayKey, dailySeed } from '@/lib/daily';
 import { replay } from '@/games/push-your-luck/replay';
 import { checkName } from '@/lib/nameFilter';
 import { RateLimiter, clientKey } from '@/lib/rateLimit';
+import { isTrustedOrigin } from '@/lib/origin';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,6 +54,13 @@ interface SubmitBody {
 }
 
 export async function POST(request: Request) {
+    // Avant la limitation de débit : ce contrôle ne lit qu'un en-tête et ne
+    // touche à aucun compteur partagé, donc un refus ne coûte rien et ne
+    // consomme pas le quota d'un tiers.
+    if (!isTrustedOrigin(request)) {
+        return Response.json({ error: 'forbidden_origin' }, { status: 403 });
+    }
+
     const limit = submitLimiter.check(clientKey(request));
     if (!limit.allowed) {
         return Response.json(

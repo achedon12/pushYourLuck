@@ -11,6 +11,15 @@ export const TEST_DATABASE_URL =
     process.env.TEST_DATABASE_URL ??
     'mysql://pushyourluck:pushyourluck@127.0.0.1:3307/pushyourluck_test';
 
+/**
+ * Origine que le navigateur poserait de lui-même sur un POST. La route des
+ * scores refuse depuis peu les écritures qui ne viennent pas du site (403
+ * `forbidden_origin`) : les appels d'API des tests doivent donc l'imiter.
+ * Miroir volontaire de `BASE_URL` dans playwright.config.ts — ce fichier ne
+ * peut pas l'importer, la configuration est évaluée en CommonJS.
+ */
+export const SITE_ORIGIN = `http://127.0.0.1:${process.env.TEST_PORT ?? 3002}`;
+
 export const FIXTURE_PLAYERS = [
     { name: 'Amandine', score: 214, rounds: 9 },
     { name: 'Boris', score: 158, rounds: 6 },

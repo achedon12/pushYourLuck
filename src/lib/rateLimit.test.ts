@@ -63,13 +63,25 @@ describe('identification de l’appelant', () => {
     const req = (headers: Record<string, string>) =>
         new Request('http://localhost/api/scores', { headers });
 
-    it('prend la première adresse de x-forwarded-for', () => {
-        // La liste va du client d'origine aux proxys successifs.
-        expect(clientKey(req({ 'x-forwarded-for': '203.0.113.7, 10.0.0.1' }))).toBe('203.0.113.7');
+    it('préfère x-real-ip, seul en-tête que l’appelant ne peut pas imposer', () => {
+        // Il doit gagner MÊME quand une liste x-forwarded-for est fournie :
+        // nginx pose x-real-ip depuis l'adresse de la connexion, l'autre non.
+        const key = clientKey(req({ 'x-real-ip': '203.0.113.9', 'x-forwarded-for': '198.51.100.1' }));
+        expect(key).toBe('203.0.113.9');
     });
 
-    it('retombe sur x-real-ip', () => {
-        expect(clientKey(req({ 'x-real-ip': '203.0.113.9' }))).toBe('203.0.113.9');
+    it('prend la DERNIÈRE adresse de x-forwarded-for', () => {
+        // nginx ajoute l'adresse réelle en fin de liste ; le début est ce que
+        // l'appelant a bien voulu écrire.
+        expect(clientKey(req({ 'x-forwarded-for': '203.0.113.7, 10.0.0.1' }))).toBe('10.0.0.1');
+    });
+
+    it('ne se laisse pas remettre le compteur à zéro par un en-tête forgé', () => {
+        // La régression exacte : lire la première valeur donnait une clé neuve
+        // à chaque envoi, et 25 requêtes d'affilée passaient sans un seul 429.
+        const forged = clientKey(req({ 'x-forwarded-for': '198.51.100.42, 10.0.0.1' }));
+        const again = clientKey(req({ 'x-forwarded-for': '203.0.113.99, 10.0.0.1' }));
+        expect(forged).toBe(again);
     });
 
     it('ne casse pas en connexion directe', () => {

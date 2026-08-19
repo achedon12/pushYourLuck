@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { seedTestDatabase } from '../fixtures';
+import { seedTestDatabase, SITE_ORIGIN } from '../fixtures';
 
 /**
  * Les en-têtes et les quotas ne sont réels qu'une fois servis : un test
@@ -46,7 +46,7 @@ test.describe('limitation de débit', () => {
             mode: 'free', name: 'Sonde', seed: 1, actions: 'bbbb',
             clientId: 'security-probe-0001',
         };
-        const headers = { 'x-forwarded-for': '198.51.100.42' };
+        const headers = { 'x-forwarded-for': '198.51.100.42', Origin: SITE_ORIGIN };
 
         let refused: number | null = null;
         for (let i = 0; i < 25; i++) {
@@ -66,11 +66,13 @@ test.describe('limitation de débit', () => {
     test('un appelant bruyant n’enferme pas les autres', async ({ request }) => {
         const body = { mode: 'free', name: 'Sonde', seed: 1, actions: 'bbbb', clientId: 'security-probe-0002' };
         for (let i = 0; i < 25; i++) {
-            await request.post('/api/scores', { data: body, headers: { 'x-forwarded-for': '198.51.100.43' } });
+            await request.post('/api/scores', {
+                data: body, headers: { 'x-forwarded-for': '198.51.100.43', Origin: SITE_ORIGIN },
+            });
         }
 
         const other = await request.post('/api/scores', {
-            data: body, headers: { 'x-forwarded-for': '198.51.100.44' },
+            data: body, headers: { 'x-forwarded-for': '198.51.100.44', Origin: SITE_ORIGIN },
         });
         expect(other.status()).not.toBe(429);
     });
@@ -78,8 +80,51 @@ test.describe('limitation de débit', () => {
     test('refuse un corps démesuré', async ({ request }) => {
         const res = await request.post('/api/scores', {
             data: { mode: 'free', name: 'Sonde', seed: 1, actions: 'd'.repeat(100_000), clientId: 'security-probe-0003' },
-            headers: { 'x-forwarded-for': '198.51.100.45' },
+            headers: { 'x-forwarded-for': '198.51.100.45', Origin: SITE_ORIGIN },
         });
         expect(res.status()).toBe(413);
+    });
+});
+
+/**
+ * Le garde d'origine est testé unitairement (`src/lib/origin.test.ts`), mais
+ * seule cette couche dit s'il est réellement BRANCHÉ sur la route : un helper
+ * juste qu'on oublie d'appeler laisse l'API grande ouverte sans qu'aucun test
+ * unitaire ne bronche.
+ */
+test.describe('origine des écritures', () => {
+    test.beforeAll(() => seedTestDatabase());
+
+    const body = { mode: 'free', name: 'Sonde', seed: 1, actions: 'bbbb', clientId: 'origin-probe-0001' };
+
+    test('refuse un envoi sans origine', async ({ request }) => {
+        const res = await request.post('/api/scores', {
+            data: body, headers: { 'x-forwarded-for': '198.51.100.60' },
+        });
+
+        expect(res.status()).toBe(403);
+        expect((await res.json()).error).toBe('forbidden_origin');
+    });
+
+    test('refuse un envoi présenté comme venant d’un autre site', async ({ request }) => {
+        const res = await request.post('/api/scores', {
+            data: body, headers: { 'x-forwarded-for': '198.51.100.61', Origin: 'https://evil.example' },
+        });
+
+        expect(res.status()).toBe(403);
+    });
+
+    test('laisse passer un envoi du site', async ({ request }) => {
+        const res = await request.post('/api/scores', {
+            data: body, headers: { 'x-forwarded-for': '198.51.100.62', Origin: SITE_ORIGIN },
+        });
+
+        expect(res.status()).not.toBe(403);
+    });
+
+    test('la lecture du classement reste publique', async ({ request }) => {
+        // Délibéré : le classement est affiché sur le site, rien n'y est privé,
+        // et le fermer n'empêcherait personne de le lire depuis une page.
+        expect((await request.get('/api/scores?mode=daily')).status()).toBe(200);
     });
 });

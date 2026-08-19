@@ -124,6 +124,7 @@ export const fr = {
             too_many_requests: 'trop d’envois en peu de temps, réessaie dans quelques minutes',
             payload_too_large: 'requête trop volumineuse',
             replay_rejected: 'partie refusée par la vérification du serveur',
+            forbidden_origin: 'envoi refusé : il ne vient pas du site',
         },
         share: 'Partager',
         shared: 'Copié',

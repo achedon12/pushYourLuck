@@ -81,12 +81,29 @@ export class RateLimiter {
 /**
  * Identifie l'appelant derrière un proxy inverse.
  *
- * `x-forwarded-for` est une liste ; la PREMIÈRE valeur est le client d'origine.
- * Elle est falsifiable par l'appelant, mais le proxy de production la réécrit —
- * et sans proxy, la connexion est directe et l'en-tête absent.
+ * L'ordre des sources n'est pas indifférent, c'est même tout l'intérêt de
+ * cette fonction. `x-real-ip` est posé par nginx à partir de l'adresse de la
+ * connexion : l'appelant ne peut pas l'imposer, le proxy l'écrase. On le
+ * préfère donc à tout le reste.
+ *
+ * À défaut, on prend la DERNIÈRE valeur de `x-forwarded-for` et non la
+ * première. La directive nginx habituelle
+ * (`proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for`) AJOUTE
+ * l'adresse réelle à la fin d'une liste que le client a pu commencer :
+ * la première valeur est donc celle de l'appelant, la dernière celle du proxy.
+ * Lire la première rendait le quota inopérant — il suffisait de changer
+ * l'en-tête à chaque envoi pour repartir d'un compteur neuf, ce qui a été
+ * vérifié : 25 envois de suite passaient sans un seul 429.
  */
 export function clientKey(request: Request): string {
+    const real = request.headers.get('x-real-ip')?.trim();
+    if (real) return real;
+
     const forwarded = request.headers.get('x-forwarded-for');
-    if (forwarded) return forwarded.split(',')[0].trim();
-    return request.headers.get('x-real-ip') ?? 'inconnu';
+    if (forwarded) {
+        const hops = forwarded.split(',').map((hop) => hop.trim()).filter(Boolean);
+        if (hops.length > 0) return hops[hops.length - 1];
+    }
+
+    return 'inconnu';
 }

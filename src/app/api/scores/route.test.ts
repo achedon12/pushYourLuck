@@ -19,11 +19,17 @@ const { POST, GET } = await import('./route');
 
 let ipCounter = 0;
 
-/** Chaque appel part d'une IP distincte, sinon le quota fausse les autres cas. */
+/**
+ * Chaque appel part d'une IP distincte, sinon le quota fausse les autres cas.
+ *
+ * `Origin` est obligatoire depuis que les écritures sont réservées au site :
+ * sans lui, la route répond 403 et aucun des cas ci-dessous n'atteindrait la
+ * validation qu'il prétend éprouver.
+ */
 const post = (body: unknown, ip = `test-ip-${ipCounter++}`) =>
     POST(new Request('http://localhost/api/scores', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-forwarded-for': ip },
+        headers: { 'Content-Type': 'application/json', 'x-forwarded-for': ip, Origin: 'http://localhost' },
         body: JSON.stringify(body),
     }));
 
@@ -42,8 +48,35 @@ describe('POST /api/scores', () => {
         prismaMock.score.count.mockReset();
     });
 
+    it('refuse un envoi qui ne vient pas du site', async () => {
+        // Premier verrou de la route, avant même la lecture du corps.
+        const res = await POST(new Request('http://localhost/api/scores', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Origin: 'https://evil.example' },
+            body: JSON.stringify(valid),
+        }));
+
+        expect(res.status).toBe(403);
+        await expect(res.json()).resolves.toEqual({ error: 'forbidden_origin' });
+        expect(prismaMock.score.upsert).not.toHaveBeenCalled();
+    });
+
+    it('refuse un envoi sans origine du tout', async () => {
+        const res = await POST(new Request('http://localhost/api/scores', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(valid),
+        }));
+
+        expect(res.status).toBe(403);
+    });
+
     it('refuse un corps illisible', async () => {
-        const res = await POST(new Request('http://localhost/api/scores', { method: 'POST', body: 'pas du json' }));
+        const res = await POST(new Request('http://localhost/api/scores', {
+            method: 'POST',
+            headers: { Origin: 'http://localhost' },
+            body: 'pas du json',
+        }));
         expect(res.status).toBe(400);
         await expect(res.json()).resolves.toEqual({ error: 'invalid_body' });
     });
@@ -109,6 +142,7 @@ describe('POST /api/scores', () => {
                 'Content-Type': 'application/json',
                 'content-length': String(2 * 1024 * 1024),
                 'x-forwarded-for': 'ip-gros-corps',
+                Origin: 'http://localhost',
             },
             body: JSON.stringify(valid),
         }));
