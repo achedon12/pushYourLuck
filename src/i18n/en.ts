@@ -31,6 +31,8 @@ export const en: Dictionary = {
         play: 'Play',
         legal: 'Legal notice',
         privacy: 'Privacy',
+        versionTitle: 'See what changed in this version',
+        madeBy: 'A game by {author}',
     },
 
     cards: {

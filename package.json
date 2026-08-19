@@ -1,6 +1,6 @@
 {
   "name": "push-your-luck",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3001",
@@ -49,5 +49,5 @@
     "typescript": "^5",
     "vitest": "^4.1.11"
   },
-  "description": "Push Your Luck — jeu de risque et de deck, sur pushyourluck.net"
+  "description": "Push Your Luck \u2014 jeu de risque et de deck, sur pushyourluck.net"
 }

@@ -34,6 +34,8 @@ export const fr = {
         play: 'Jouer',
         legal: 'Mentions légales',
         privacy: 'Confidentialité',
+        versionTitle: 'Voir les nouveautés de cette version',
+        madeBy: 'Un jeu de {author}',
     },
 
     cards: {
