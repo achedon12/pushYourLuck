@@ -19,6 +19,7 @@ export const en: Dictionary = {
         leaderboard: 'Leaderboard',
         rules: 'Rules',
         changelog: 'Changelog',
+        home: 'Push Your Luck — home',
         skipToContent: 'Skip to content',
         toggleTheme: 'Switch theme',
         switchLanguage: 'Passer en français',

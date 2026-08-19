@@ -13,7 +13,7 @@ export function SiteHeader({ locale, routeKey }: { locale: Locale; routeKey: Rou
     return (
         <header className="sticky top-0 z-30 border-b border-line bg-bg/80 backdrop-blur-md">
             <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-2 px-3 py-3 sm:px-4">
-                <Link href={path('home', locale)} className="flex items-center gap-2">
+                <Link href={path('home', locale)} className="flex items-center gap-2" aria-label={t.nav.home}>
                     <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-gold/40 bg-gold/12 text-gold">
                         <TrendingUp size={16} strokeWidth={2.2} aria-hidden />
                     </span>

@@ -22,6 +22,7 @@ export const fr = {
         leaderboard: 'Classement',
         rules: 'Règles',
         changelog: 'Nouveautés',
+        home: 'Push Your Luck — accueil',
         skipToContent: 'Aller au contenu',
         toggleTheme: 'Changer de thème',
         switchLanguage: 'Switch to English',
