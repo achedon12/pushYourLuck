@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { seedTestDatabase } from '../fixtures';
 
 /**
  * Le référencement se vérifie sur le HTML RÉELLEMENT servi : les tests
@@ -60,5 +61,28 @@ test.describe('référencement', () => {
         expect((await request.get('/manifest.webmanifest')).ok()).toBe(true);
         expect((await request.get('/icon.png')).headers()['content-type']).toContain('image/png');
         expect((await request.get('/favicon.ico')).ok()).toBe(true);
+    });
+});
+
+/**
+ * Séparé du bloc ci-dessus : ces assertions dépendent de DONNÉES, là où le
+ * reste du référencement ne tient qu'au balisage. Le mélanger obligerait à
+ * semer la base pour des tests qui n'en ont aucun besoin.
+ */
+test.describe('référencement — archive du classement', () => {
+    test.beforeAll(() => seedTestDatabase());
+
+    test('déclare les mois d’archive du classement, paramètre traduit', async ({ request }) => {
+        // Les fixtures posent un score le mois précédent : l'archive existe
+        // donc, et le sitemap doit la déclarer. Ces URL sont liées depuis la
+        // navigation du calendrier — les taire revient à laisser les moteurs
+        // les découvrir au hasard, sans date ni traduction.
+        const sitemap = await (await request.get('/sitemap.xml')).text();
+
+        expect(sitemap).toMatch(/\/classement\?mois=\d{4}-\d{2}/);
+        // Le paramètre est traduit comme les slugs : une URL anglaise portant
+        // `?mois=` désignerait une page qui n'existe pas.
+        expect(sitemap).toMatch(/\/en\/leaderboard\?month=\d{4}-\d{2}/);
+        expect(sitemap).not.toMatch(/\/en\/leaderboard\?mois=/);
     });
 });
