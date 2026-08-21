@@ -23,6 +23,27 @@ export interface Release {
 
 export const CHANGELOG: Release[] = [
     {
+        version: '1.1.0',
+        date: '2026-08-21',
+        changes: [
+            {
+                type: 'balance',
+                fr: 'La première carte d’une partie est toujours un gain : plus personne ne saute avant d’avoir pris la moindre décision.',
+                en: 'The first card of a run is always a gain: nobody busts before making a single decision.',
+            },
+            {
+                type: 'feature',
+                fr: 'Sur téléphone, toute la partie tient dans l’écran — jauge, carte, pot, boutons et composition du paquet, sans défiler.',
+                en: 'On phones the whole game fits on one screen — risk gauge, card, pot, buttons and deck contents, with no scrolling.',
+            },
+            {
+                type: 'fix',
+                fr: 'Les records en partie libre ne gardent qu’une ligne par pseudo, et affichent le nombre de manches.',
+                en: 'Free-play records now keep a single row per name, and show the number of rounds.',
+            },
+        ],
+    },
+    {
         version: '1.0.0',
         date: '2026-08-19',
         changes: [
