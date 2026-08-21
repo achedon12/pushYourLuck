@@ -239,7 +239,7 @@ export const en: Dictionary = {
         emptyCta: 'Play the daily game',
         rounds: { one: '{count} round', other: '{count} rounds' },
         freeTitle: 'Free-play records',
-        freeLead: 'All decks, all time.',
+        freeLead: 'All decks, all time — one record per name.',
         calendarTitle: 'Best scores calendar',
         calendarLead: 'The best score posted on each day’s deck this month.',
         calendarEmpty: 'No score recorded this month.',

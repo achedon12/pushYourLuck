@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { seedTestDatabase, FIXTURE_PLAYERS, SITE_ORIGIN } from '../fixtures';
+import { seedTestDatabase, FIXTURE_PLAYERS, FIXTURE_FREE_RECORDS, SITE_ORIGIN } from '../fixtures';
 import { createRun, draw, bank, chooseOffer, readDeck } from '../../src/games/push-your-luck/engine';
 import { dailySeed } from '../../src/lib/daily';
 
@@ -105,6 +105,20 @@ test.describe('envoi d’un score', () => {
         const scores = board.scores.map((s: { score: number }) => s.score);
         expect(scores).toEqual([...scores].sort((a: number, b: number) => b - a));
         expect(scores[0]).toBe(FIXTURE_PLAYERS[0].score);
+    });
+
+    test('les records en partie libre ne gardent qu’une ligne par pseudo', async ({ page }) => {
+        // Les fixtures contiennent « Achedon » et « achedon » sous deux
+        // identifiants de navigateur : une seule ligne doit rester, la
+        // meilleure, et le nombre de manches doit être affiché comme dans le
+        // classement du jour.
+        await page.goto('/classement');
+        const records = page.locator('section').filter({ hasText: 'Records en partie libre' });
+
+        await expect(records.getByRole('listitem').filter({ hasText: /achedon/i })).toHaveCount(1);
+        await expect(records.getByText(String(FIXTURE_FREE_RECORDS[0].score))).toBeVisible();
+        await expect(records.getByText(String(FIXTURE_FREE_RECORDS[1].score))).toHaveCount(0);
+        await expect(records.getByText(`${FIXTURE_FREE_RECORDS[0].rounds - 1} manches`)).toBeVisible();
     });
 
     test('la page classement affiche les scores envoyés', async ({ page, request }) => {

@@ -4,6 +4,7 @@ import { replay } from '@/games/push-your-luck/replay';
 import { checkName } from '@/lib/nameFilter';
 import { RateLimiter, clientKey } from '@/lib/rateLimit';
 import { isTrustedOrigin } from '@/lib/origin';
+import { bestPerName, scanSize } from '@/lib/records';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,12 +35,19 @@ export async function GET(request: Request) {
     const day = mode === 'daily' ? (params.get('day') ?? dayKey()) : '';
     const limit = Math.min(100, Math.max(1, Number(params.get('limit') ?? 20)));
 
-    const scores = await prisma.score.findMany({
+    const rows = await prisma.score.findMany({
         where: { game: GAME, mode, dayKey: day },
         orderBy: [{ score: 'desc' }, { rounds: 'asc' }, { createdAt: 'asc' }],
-        take: limit,
+        // En mode libre l'unicité en base porte sur le clientId : un même
+        // pseudo peut occuper plusieurs lignes, et les records n'en gardent
+        // qu'une. Il faut donc lire plus de lignes qu'on n'en rendra.
+        take: mode === 'free' ? scanSize(limit) : limit,
         select: { name: true, score: true, rounds: true, createdAt: true },
     });
+
+    // Le classement du jour, lui, garde ses doublons de pseudo : deux joueurs
+    // qui choisissent le même nom ont chacun droit à leur ligne du jour.
+    const scores = mode === 'free' ? bestPerName(rows, limit) : rows;
 
     return Response.json({ mode, day, scores });
 }

@@ -243,7 +243,7 @@ export const fr = {
         emptyCta: 'Jouer la partie du jour',
         rounds: { one: '{count} manche', other: '{count} manches' },
         freeTitle: 'Records en partie libre',
-        freeLead: 'Tous paquets confondus, depuis toujours.',
+        freeLead: 'Tous paquets confondus, depuis toujours — un seul record par pseudo.',
         calendarTitle: 'Calendrier des meilleurs scores',
         calendarLead: 'Le meilleur score obtenu chaque jour du mois sur le paquet du jour.',
         calendarEmpty: 'Aucun score enregistré ce mois-ci.',

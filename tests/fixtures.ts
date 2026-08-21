@@ -28,6 +28,18 @@ export const FIXTURE_PLAYERS = [
 
 export const FIXTURE_PREVIOUS_MONTH = { name: 'Damien', score: 133, rounds: 5 };
 
+/**
+ * Records de partie libre. Le même pseudo y figure DEUX fois, sous deux
+ * identifiants de navigateur et deux graphies : c'est exactement la situation
+ * que la page doit dédoublonner, l'unicité en base portant sur le `clientId` et
+ * jamais sur le pseudo.
+ */
+export const FIXTURE_FREE_RECORDS = [
+    { name: 'Achedon', score: 191, rounds: 7 },
+    { name: 'achedon', score: 181, rounds: 6 },
+    { name: 'Couzcouz', score: 164, rounds: 5 },
+];
+
 /** Réinitialise la base de test dans un processus séparé. */
 export function seedTestDatabase(): void {
     execFileSync('npx', ['tsx', 'scripts/seed-test-db.ts'], {

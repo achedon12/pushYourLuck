@@ -176,4 +176,38 @@ describe('GET /api/scores', () => {
             expect.objectContaining({ take: 100 }),
         );
     });
+
+    it('ne rend qu’un record par pseudo en partie libre', async () => {
+        // Le dédoublonnage vit dans `lib/records.ts` : ce cas dit seulement
+        // qu'il est bien BRANCHÉ sur la route, ce qu'aucun test du helper ne
+        // peut affirmer.
+        prismaMock.score.findMany.mockResolvedValue([
+            { name: 'achedon12', score: 191, rounds: 6 },
+            { name: 'achedon12', score: 181, rounds: 5 },
+            { name: 'Couzcouz', score: 150, rounds: 4 },
+        ]);
+
+        const res = await GET(new Request('http://localhost/api/scores?mode=free&limit=10'));
+        const body = await res.json();
+
+        expect(body.scores.map((s: { name: string }) => s.name)).toEqual(['achedon12', 'Couzcouz']);
+        // La lecture est volontairement plus large que la sortie, sinon un seul
+        // joueur en tête viderait le tableau.
+        expect(prismaMock.score.findMany).toHaveBeenCalledWith(
+            expect.objectContaining({ take: 200 }),
+        );
+    });
+
+    it('garde les doublons de pseudo dans le classement du jour', async () => {
+        // Deux joueurs peuvent choisir le même nom : chacun a droit à sa ligne.
+        prismaMock.score.findMany.mockResolvedValue([
+            { name: 'Leo', score: 90, rounds: 3 },
+            { name: 'Leo', score: 80, rounds: 2 },
+        ]);
+
+        const res = await GET(new Request('http://localhost/api/scores?mode=daily'));
+        const body = await res.json();
+
+        expect(body.scores).toHaveLength(2);
+    });
 });

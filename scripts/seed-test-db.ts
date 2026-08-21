@@ -10,7 +10,7 @@
 import { PrismaClient } from '../src/generated/prisma/client';
 import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 import { dayKey } from '../src/lib/daily';
-import { FIXTURE_PLAYERS, FIXTURE_PREVIOUS_MONTH, TEST_DATABASE_URL } from '../tests/fixtures';
+import { FIXTURE_PLAYERS, FIXTURE_PREVIOUS_MONTH, FIXTURE_FREE_RECORDS, TEST_DATABASE_URL } from '../tests/fixtures';
 
 async function main() {
     if (!TEST_DATABASE_URL.includes('_test')) {
@@ -53,7 +53,22 @@ async function main() {
             },
         });
 
-        console.log(`base de test réinitialisée : ${FIXTURE_PLAYERS.length + 1} scores`);
+        // Mode libre : `dayKey` reste vide, c'est ce qui distingue ces lignes du
+        // classement quotidien (voir le commentaire du modèle Score).
+        await prisma.score.createMany({
+            data: FIXTURE_FREE_RECORDS.map((record, i) => ({
+                game: 'push-your-luck',
+                mode: 'free',
+                dayKey: '',
+                name: record.name,
+                score: record.score,
+                rounds: record.rounds,
+                clientId: `fixture-free-${i}`,
+            })),
+        });
+
+        const total = FIXTURE_PLAYERS.length + 1 + FIXTURE_FREE_RECORDS.length;
+        console.log(`base de test réinitialisée : ${total} scores`);
     } finally {
         await prisma.$disconnect();
     }

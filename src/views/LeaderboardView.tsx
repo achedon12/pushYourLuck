@@ -5,6 +5,7 @@ import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { SiteFooter } from '@/components/SiteFooter';
 import { ScoreCalendar } from '@/components/ScoreCalendar';
 import { bestPerDay, type DayBest } from '@/lib/calendar';
+import { bestPerName, scanSize } from '@/lib/records';
 import { prisma } from '@/lib/prisma';
 import { dayKey, formatDayKey } from '@/lib/daily';
 import { HTML_LANG, type Locale } from '@/i18n/config';
@@ -14,6 +15,9 @@ import { path, MONTH_PARAM } from '@/i18n/routes';
 import { clampMonth } from '@/lib/months';
 
 const GAME = 'push-your-luck';
+
+/** Lignes affichées dans les records de partie libre, après dédoublonnage. */
+const FREE_RECORDS = 10;
 
 export async function LeaderboardView({
     locale, requestedMonth,
@@ -51,13 +55,17 @@ export async function LeaderboardView({
                 select: { name: true, score: true, rounds: true },
             })
             .catch(() => []),
+        // Un seul record par pseudo : en mode libre l'unicité en base porte sur
+        // le clientId, donc le même joueur peut occuper plusieurs lignes. On
+        // lit large et `bestPerName` ne garde que sa meilleure.
         prisma.score
             .findMany({
                 where: { game: GAME, mode: 'free' },
-                orderBy: [{ score: 'desc' }, { createdAt: 'asc' }],
-                take: 10,
-                select: { name: true, score: true },
+                orderBy: [{ score: 'desc' }, { rounds: 'asc' }, { createdAt: 'asc' }],
+                take: scanSize(FREE_RECORDS),
+                select: { name: true, score: true, rounds: true },
             })
+            .then((rows) => bestPerName(rows, FREE_RECORDS))
             .catch(() => []),
         // `groupBy` ne rendrait que le score maximum ; le calendrier affiche
         // aussi les manches et le nom, qui appartiennent à UNE ligne précise.
@@ -147,7 +155,12 @@ export async function LeaderboardView({
                                         <span className="tnum w-5 shrink-0 text-right text-faint">{i + 1}</span>
                                         <span className="truncate">{entry.name}</span>
                                     </span>
-                                    <span className="tnum shrink-0 font-semibold">{entry.score}</span>
+                                    <span className="flex shrink-0 items-baseline gap-3">
+                                        <span className="text-xs text-faint max-[400px]:hidden">
+                                            {plural(lang, Math.max(0, entry.rounds - 1), l.rounds)}
+                                        </span>
+                                        <span className="tnum font-semibold">{entry.score}</span>
+                                    </span>
                                 </li>
                             ))}
                         </ol>
