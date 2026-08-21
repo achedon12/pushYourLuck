@@ -171,6 +171,15 @@ export function PushYourLuck({ locale, t }: { locale: Locale; t: Dictionary }) {
         if (mode === 'daily') writeLocal(STORE.playedDay, today);
     }, [screen, mode, state.score, bestFree, today]);
 
+    // Sous 640 px le plateau occupe tout l'espace sous l'en-tête du site : sans ce
+    // verrou, la page continue de défiler derrière lui et le moindre glissement
+    // du pouce fait bouger le décor sous les boutons.
+    useEffect(() => {
+        if (screen !== 'playing') return;
+        document.body.dataset.gameBoard = 'on';
+        return () => { delete document.body.dataset.gameBoard; };
+    }, [screen]);
+
     // Clavier : Espace pour tirer, E pour encaisser — le jeu doit se jouer à une main.
     useEffect(() => {
         if (screen !== 'playing' || state.phase === 'shop' || state.phase === 'over') return;
@@ -217,9 +226,17 @@ export function PushYourLuck({ locale, t }: { locale: Locale; t: Dictionary }) {
     const risk = Math.round(deck.bustChance * 100);
 
     return (
-        <div className={`flex flex-col gap-5 ${shake ? 'animate-shake' : ''}`}>
+        // Sur mobile, le plateau est une couche qui remplit l'écran sous l'en-tête
+        // du site (`top-14` = sa hauteur) : tout ce qui sert à décider — jauge,
+        // carte, pot, boutons, composition du paquet — doit tenir sans défiler.
+        // `z-20` passe SOUS l'en-tête de navigation, qui reste donc accessible ;
+        // `overflow-y-auto` n'est qu'un filet pour les très petits écrans ou les
+        // grandes polices : dans le cas normal rien ne défile.
+        <div
+            className={`flex flex-col gap-5 max-sm:fixed max-sm:inset-x-0 max-sm:bottom-0 max-sm:top-14 max-sm:z-20 max-sm:gap-2 max-sm:overflow-y-auto max-sm:overscroll-contain max-sm:bg-bg max-sm:px-3 max-sm:pb-[max(0.5rem,env(safe-area-inset-bottom))] max-sm:pt-2 ${shake ? 'animate-shake' : ''}`}
+        >
             {/* En-tête : manche, vies, score */}
-            <header className="flex items-center justify-between gap-2 rounded-2xl border border-line bg-surface/70 px-3 py-3 sm:px-4">
+            <header className="flex shrink-0 items-center justify-between gap-2 rounded-2xl border border-line bg-surface/70 px-3 py-3 max-sm:rounded-xl max-sm:py-2 sm:px-4">
                 <div className="flex flex-col">
                     <span className="text-[11px] uppercase tracking-[0.18em] text-faint">
                         {mode === 'daily' ? g.modeDaily : g.modeFree}
@@ -255,7 +272,7 @@ export function PushYourLuck({ locale, t }: { locale: Locale; t: Dictionary }) {
             </header>
 
             {/* Jauge de risque : l'information sur laquelle repose toute la décision */}
-            <div>
+            <div className="shrink-0">
                 <div className="mb-1.5 flex items-baseline justify-between gap-2 text-xs">
                     <span className="uppercase tracking-[0.18em] text-faint">
                         {/* Libellé court sous 400 px : le long passe à la ligne et
@@ -276,7 +293,7 @@ export function PushYourLuck({ locale, t }: { locale: Locale; t: Dictionary }) {
             </div>
 
             {/* Plateau */}
-            <div className="relative flex min-h-[15rem] flex-col items-center justify-center gap-4">
+            <div className="relative flex min-h-[15rem] flex-col items-center justify-center gap-4 max-sm:min-h-0 max-sm:flex-1 max-sm:gap-2">
                 <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center">
                     {floats.map((f) => (
                         <span
@@ -291,13 +308,18 @@ export function PushYourLuck({ locale, t }: { locale: Locale; t: Dictionary }) {
                     ))}
                 </div>
 
-                {state.lastCard ? (
-                    <div key={state.drawn.length} className="animate-pop-in">
-                        <Card id={state.lastCard} cards={t.cards} size="lg" />
-                    </div>
-                ) : (
-                    <CardBack size="lg" />
-                )}
+                {/* `flex-1 min-h-0` donne à la carte une hauteur de référence :
+                    c'est ce qui lui permet de rétrécir sur un écran court au
+                    lieu de pousser le pot et les boutons hors de l'écran. */}
+                <div className="flex min-h-0 flex-1 items-center justify-center">
+                    {state.lastCard ? (
+                        <div key={state.drawn.length} className="animate-pop-in flex h-full items-center justify-center">
+                            <Card id={state.lastCard} cards={t.cards} size="lg" />
+                        </div>
+                    ) : (
+                        <CardBack size="lg" />
+                    )}
+                </div>
 
                 {state.revealed > 0 && (
                     <div className="flex flex-col items-center gap-1.5">
@@ -314,27 +336,27 @@ export function PushYourLuck({ locale, t }: { locale: Locale; t: Dictionary }) {
             </div>
 
             {/* Pot + valeur réelle d'un encaissement */}
-            <div className="rounded-2xl border border-line bg-surface/70 px-4 py-4 text-center sm:px-5">
+            <div className="shrink-0 rounded-2xl border border-line bg-surface/70 px-4 py-4 text-center max-sm:rounded-xl max-sm:py-2.5 sm:px-5">
                 <span className="text-[11px] uppercase tracking-[0.18em] text-faint">{g.pot}</span>
-                <div className="mt-1 flex items-center justify-center gap-3">
-                    <span className="tnum text-5xl font-bold text-gold">{state.pot}</span>
+                <div className="mt-1 flex items-center justify-center gap-3 max-sm:mt-0">
+                    <span className="tnum text-5xl font-bold text-gold max-sm:text-4xl">{state.pot}</span>
                     {state.drawn.length > 1 && (
                         <span className="tnum rounded-lg border border-brand/40 bg-brand/12 px-2 py-1 text-sm font-semibold text-brand-soft">
                             ×{bankMultiplier(state.drawn.length).toFixed(2)}
                         </span>
                     )}
                 </div>
-                <p className="mt-1 text-sm text-muted">
+                <p className="mt-1 text-sm text-muted max-sm:mt-0 max-sm:text-xs">
                     {state.pot > 0 ? format(g.payout, { n: payout }) : g.potEmpty}
                 </p>
             </div>
 
             {/* Actions */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid shrink-0 grid-cols-2 gap-3 max-sm:gap-2">
                 <button
                     type="button"
                     onClick={onDraw}
-                    className="group relative overflow-hidden rounded-2xl border border-brand/40 bg-brand/12 px-4 py-4 text-center transition hover:bg-brand/20 active:scale-[.98]"
+                    className="group relative overflow-hidden rounded-2xl border border-brand/40 bg-brand/12 px-4 py-4 text-center transition hover:bg-brand/20 active:scale-[.98] max-sm:py-3"
                 >
                     <span className="block text-lg font-semibold text-brand-soft">{g.draw}</span>
                     <span className="tnum block text-xs text-muted">{format(g.drawRisk, { n: risk })}</span>
@@ -345,7 +367,7 @@ export function PushYourLuck({ locale, t }: { locale: Locale; t: Dictionary }) {
                     type="button"
                     onClick={onBank}
                     disabled={state.pot <= 0}
-                    className="rounded-2xl border border-gold/40 bg-gold/12 px-4 py-4 text-center transition enabled:hover:bg-gold/22 enabled:active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-35"
+                    className="rounded-2xl border border-gold/40 bg-gold/12 px-4 py-4 text-center transition enabled:hover:bg-gold/22 enabled:active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-35 max-sm:py-3"
                     style={state.pot > 0 ? { animation: 'pulse-ring 1.9s ease-out infinite' } : undefined}
                 >
                     <span className="block text-lg font-semibold text-gold-soft">{g.bank}</span>
@@ -355,19 +377,24 @@ export function PushYourLuck({ locale, t }: { locale: Locale; t: Dictionary }) {
                 </button>
             </div>
 
-            <p className="text-center text-xs text-faint">{g.shortcuts}</p>
+            {/* Raccourcis clavier : rien à en faire au doigt, et c'est la ligne la
+                moins utile à garder quand la hauteur est comptée. */}
+            <p className="text-center text-xs text-faint max-sm:hidden">{g.shortcuts}</p>
 
             {/* Composition du paquet — l'information publique qui rend le jeu jouable */}
-            <section className="rounded-2xl border border-line bg-surface/40 p-4">
-                <h2 className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 text-xs uppercase tracking-[0.18em] text-faint">
+            <section className="shrink-0 rounded-2xl border border-line bg-surface/40 p-4 max-sm:rounded-xl max-sm:p-2.5">
+                <h2 className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 text-xs uppercase tracking-[0.18em] text-faint max-sm:mb-1.5">
                     <span>{g.deckTitle}</span>
                     <span className="tnum">
                         {plural(lang, deck.size, g.deckCount)} · {plural(lang, deck.bombs, g.deckBombs)}
                     </span>
                 </h2>
-                <ul className="flex flex-wrap gap-1.5">
+                {/* Sur mobile la composition tient sur une seule ligne qui défile
+                    horizontalement : à la ligne, elle mangeait trois rangées de
+                    hauteur et repoussait les boutons hors de l'écran. */}
+                <ul className="flex flex-wrap gap-1.5 max-sm:flex-nowrap max-sm:overflow-x-auto max-sm:pb-1">
                     {deck.composition.map(({ id, count }) => (
-                        <li key={id}>
+                        <li key={id} className="max-sm:shrink-0">
                             <CardChip id={id} cards={t.cards} count={count} />
                         </li>
                     ))}

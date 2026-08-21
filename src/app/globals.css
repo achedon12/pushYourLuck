@@ -168,6 +168,15 @@ body {
     background-attachment: fixed;
 }
 
+/* Partie en cours sur mobile : le plateau est une couche qui remplit l'écran
+   (voir `PushYourLuck.tsx`). Sans ce verrou, la page éditoriale continue de
+   défiler derrière lui — le décor bouge sous les boutons sans que rien ne
+   l'explique. Le verrou s'arrête à 640 px : au-delà, le jeu reste dans le flux
+   de la page et celle-ci doit défiler normalement. */
+@media (max-width: 639px) {
+    body[data-game-board] { overflow: hidden; }
+}
+
 ::selection {
     background: var(--brand);
     color: #fff;

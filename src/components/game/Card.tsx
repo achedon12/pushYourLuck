@@ -17,7 +17,18 @@ const TONE_STYLES = {
 const SIZES = {
     sm: { box: 'w-16 h-[5.5rem] rounded-xl p-1.5 gap-1', boxFluid: 'w-full h-[5.5rem] rounded-xl p-1.5 gap-1', icon: 18, title: 'text-[9px]' },
     md: { box: 'w-32 h-44 rounded-2xl p-3 gap-1.5',      boxFluid: 'w-full h-44 rounded-2xl p-2 gap-1.5',      icon: 34, title: 'text-sm' },
-    lg: { box: 'w-40 h-56 rounded-3xl p-4 gap-2',        boxFluid: 'w-full h-56 rounded-3xl p-4 gap-2',        icon: 44, title: 'text-base' },
+    // `lg` est la carte du plateau, la seule dont la hauteur soit disputée.
+    // `max-h-full` la fait rétrécir dans la place que le plateau lui laisse —
+    // sur un écran court, mieux vaut une carte plus petite que des boutons
+    // repoussés hors de l'écran — et `aspect-[5/7]` en déduit la largeur. Le
+    // parent doit avoir une hauteur définie pour que le pourcentage s'applique :
+    // c'est le rôle du `flex-1 min-h-0` autour d'elle dans `PushYourLuck.tsx`.
+    lg: {
+        box: 'h-56 max-h-full aspect-[5/7] rounded-3xl p-3 gap-1.5 sm:w-40 sm:p-4 sm:gap-2',
+        boxFluid: 'w-full h-56 rounded-3xl p-4 gap-2',
+        icon: 44,
+        title: 'text-base',
+    },
 } as const;
 
 export function Card({
@@ -52,7 +63,7 @@ export function CardBack({ size = 'md' }: { size?: keyof typeof SIZES }) {
     const box = {
         sm: 'w-16 h-[5.5rem] rounded-xl',
         md: 'w-32 h-44 rounded-2xl',
-        lg: 'w-40 h-56 rounded-3xl',
+        lg: 'h-56 max-h-full aspect-[5/7] rounded-3xl sm:w-40',
     }[size];
 
     return (
