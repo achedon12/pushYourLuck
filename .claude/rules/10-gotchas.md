@@ -16,8 +16,9 @@ Chacun a déjà coûté du temps sur ce dépôt.
   « ass » cherché partout bannit « Cassandra ».
 - **Le client Prisma généré peut être périmé** après un changement de schéma :
   `npx prisma generate` avant de croire une erreur de typage sur un champ.
-- **Le hasard fait échouer les tests fonctionnels au hasard.** Une bombe sort
-  au premier tirage environ une fois sur cinq. Un test qui fige une suite de
+- **Le hasard fait échouer les tests fonctionnels au hasard.** La première
+  carte d'une partie est garantie payante (`openOnGain`), mais dès la deuxième
+  une bombe sort environ une fois sur cinq. Un test qui fige une suite de
   tirages échoue un jour sur cinq sans qu'aucun bug n'existe — voir
   `06-tests.md`. Avant de conclure à une régression sur un test de partie,
   rejoue-le.

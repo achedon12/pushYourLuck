@@ -62,9 +62,12 @@ export const CARDS: Record<string, CardDef> = {
 };
 
 /**
- * Pioche de départ : 26 cartes dont 5 bombes (~19 % de risque au premier tirage).
+ * Pioche de départ : 26 cartes dont 5 bombes (~19 % de risque par tirage).
  * Volontairement sans carte spéciale — la première manche doit s'expliquer en
  * cinq secondes ; la complexité arrive par la boutique.
+ *
+ * Exception : la toute première carte de la partie est forcée sur un gain,
+ * voir `openOnGain` dans engine.ts.
  */
 export const STARTING_DECK: readonly string[] = [
     ...Array(4).fill('coin1'),

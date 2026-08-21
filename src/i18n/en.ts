@@ -172,7 +172,9 @@ export const en: Dictionary = {
         lead: 'Everything you need to play, plus the few subtleties that make the difference.',
         turnTitle: 'A turn of play',
         turnDraw: 'Draw.',
-        turnDrawText: 'You flip the top card of the deck. It adds to the pot, multiplies it, or it explodes.',
+        turnDrawText:
+            'You flip the top card of the deck. It adds to the pot, multiplies it, or it explodes. ' +
+            'The very first card of a run is always a gain: nobody busts before making a single decision.',
         turnBank: 'Bank.',
         turnBankText: 'The pot goes to your score for good. The round ends and you move on to the shop.',
         turnBust: 'Bust.',

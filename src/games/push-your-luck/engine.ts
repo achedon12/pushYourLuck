@@ -62,6 +62,13 @@ export interface RunState {
     insured: boolean;
     /** Nombre de cartes du dessus actuellement visibles (Sonar). */
     revealed: number;
+    /**
+     * Vrai tant que la carte du dessus est garantie payante — uniquement au
+     * tout premier tirage d'une partie (voir `openOnGain`). `readDeck` s'y fie
+     * pour afficher 0 % : la jauge de risque promet une probabilité réelle,
+     * elle ne doit pas annoncer un danger qui ne peut pas se produire.
+     */
+    safeTop: boolean;
     /** Propositions de la boutique en phase `shop`. */
     offers: string[];
     /** Dernière carte retournée — l'UI l'anime. */
@@ -85,12 +92,33 @@ export type GameEvent =
 /* Création                                                            */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Remonte un gain sûr sur le dessus du paquet.
+ *
+ * Sans ça une partie sur cinq s'ouvre sur une bombe : le joueur perd une vie
+ * avant d'avoir pris la moindre décision, et comme la partie du jour est la
+ * même pour tout le monde, ce mauvais tirage est infligé à tous les joueurs le
+ * même jour. On échange la carte du dessus avec le premier gain rencontré :
+ * la composition du paquet est intacte, l'échange reste déterministe (donc
+ * rejouable côté serveur), seul l'ordre change.
+ *
+ * Un ×2 ne ferait pas l'affaire comme carte d'ouverture : sur un pot vide il
+ * vaut zéro, et une première carte muette se lit comme un bug.
+ */
+function openOnGain(deck: string[]): string[] {
+    const i = deck.findIndex((id) => CARDS[id].effect === 'gain' && CARDS[id].value > 0);
+    if (i <= 0) return deck;
+    const out = deck.slice();
+    [out[0], out[i]] = [out[i], out[0]];
+    return out;
+}
+
 export function createRun(seed: number): RunState {
-    const [deck, rng] = shuffle(STARTING_DECK, seed);
+    const [shuffled, rng] = shuffle(STARTING_DECK, seed);
     return {
         seed,
         rng,
-        deck,
+        deck: openOnGain(shuffled),
         drawn: [],
         removed: [],
         pot: 0,
@@ -100,6 +128,7 @@ export function createRun(seed: number): RunState {
         phase: 'ready',
         insured: false,
         revealed: 0,
+        safeTop: true,
         offers: [],
         lastCard: null,
         events: [],
@@ -196,6 +225,7 @@ export function draw(prev: RunState): RunState {
     s.drawn.push(id);
     s.lastCard = id;
     s.revealed = Math.max(0, s.revealed - 1);
+    s.safeTop = false;
 
     const def = CARDS[id];
     const { busted } = EFFECTS[def.effect](s, def.value);
@@ -308,6 +338,7 @@ export interface DeckInsight {
     bombs: number;
     /** Probabilité exacte que le prochain tirage fasse sauter la manche. */
     bustChance: number;
+
     /** Composition restante, triée pour l'affichage. */
     composition: { id: string; count: number }[];
 }
@@ -328,7 +359,7 @@ export function readDeck(s: RunState): DeckInsight {
     return {
         size: s.deck.length,
         bombs,
-        bustChance: s.deck.length ? bombs / s.deck.length : 0,
+        bustChance: s.safeTop || !s.deck.length ? 0 : bombs / s.deck.length,
         composition,
     };
 }

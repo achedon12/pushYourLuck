@@ -109,10 +109,46 @@ describe('moteur de jeu', () => {
     });
 
     it('expose une probabilité de saut exacte', () => {
-        const run = createRun(2);
+        // Après le premier tirage seulement : la carte d'ouverture est forcée,
+        // le risque annoncé y est donc nul (voir le test suivant).
+        const run = draw(createRun(2));
         const { size, bombs, bustChance } = readDeck(run);
-        expect(size).toBe(STARTING_DECK.length);
+        expect(size).toBe(STARTING_DECK.length - 1);
         expect(bombs).toBe(5);
-        expect(bustChance).toBeCloseTo(5 / STARTING_DECK.length, 10);
+        expect(bustChance).toBeCloseTo(5 / (STARTING_DECK.length - 1), 10);
+    });
+
+    it('ouvre TOUJOURS la partie sur un gain, quelle que soit la graine', () => {
+        // Sans cette garantie, une partie sur cinq saute avant la première
+        // décision du joueur — et la partie du jour étant commune, ce mauvais
+        // tirage frapperait tout le monde le même jour.
+        for (let seed = 0; seed < 300; seed++) {
+            const opened = draw(createRun(seed));
+            expect(opened.lastCard, `graine ${seed}`).not.toBe('bomb');
+            expect(opened.lives, `graine ${seed}`).toBe(MAX_LIVES);
+            expect(opened.pot, `graine ${seed}`).toBeGreaterThan(0);
+        }
+    });
+
+    it('annonce 0 % de risque avant le premier tirage, puis le vrai chiffre', () => {
+        const fresh = createRun(2);
+        expect(readDeck(fresh).bustChance).toBe(0);
+        // La composition reste honnête : les cinq bombes sont bien annoncées.
+        expect(readDeck(fresh).bombs).toBe(5);
+        expect(readDeck(draw(fresh)).bustChance).toBeGreaterThan(0);
+    });
+
+    it('ne garantit rien au-delà de la première carte', () => {
+        // La garantie ne survit ni à une manche suivante ni à un saut : sinon
+        // elle deviendrait une rente et le jeu perdrait sa tension.
+        const run = drawUntil(createRun(11), (s) => s.pot > 0);
+        const banked = chooseOffer(bank(run), null);
+        expect(banked.safeTop).toBe(false);
+        expect(readDeck(banked).bustChance).toBeGreaterThan(0);
+    });
+
+    it('garde le paquet de départ intact malgré la carte d’ouverture forcée', () => {
+        const deck = createRun(42).deck.slice().sort();
+        expect(deck).toEqual(STARTING_DECK.slice().sort());
     });
 });

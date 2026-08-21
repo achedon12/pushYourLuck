@@ -176,7 +176,9 @@ export const fr = {
         lead: 'Tout ce qu’il faut savoir pour jouer, et les quelques subtilités qui font la différence.',
         turnTitle: 'Le tour de jeu',
         turnDraw: 'Tirer.',
-        turnDrawText: 'Tu retournes la carte du dessus du paquet. Elle ajoute au pot, le multiplie, ou elle explose.',
+        turnDrawText:
+            'Tu retournes la carte du dessus du paquet. Elle ajoute au pot, le multiplie, ou elle explose. ' +
+            'La toute première carte d’une partie est toujours un gain : personne ne saute avant d’avoir décidé quoi que ce soit.',
         turnBank: 'Encaisser.',
         turnBankText: 'Le pot part au score, définitivement. La manche s’arrête et tu passes à la boutique.',
         turnBust: 'Sauter.',

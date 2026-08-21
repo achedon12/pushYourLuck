@@ -96,10 +96,10 @@ qu'on n'exclut, pour que la PLACE de l'élément reste comparée.
 
 ## Le hasard, piège numéro un des tests fonctionnels
 
-Le paquet du mode libre est aléatoire. Une bombe sort au premier tirage environ
-une fois sur cinq : un test qui affirme « après un tirage il reste 25 cartes »
-échoue un jour sur cinq **sans qu'aucun bug n'existe**, et un test qui échoue au
-hasard finit par être ignoré.
+Le paquet du mode libre est aléatoire. Seule la carte d'ouverture est garantie
+payante ; ensuite une bombe sort environ une fois sur cinq : un test qui affirme
+« après trois tirages le pot vaut tant » échoue un jour sur cinq **sans qu'aucun
+bug n'existe**, et un test qui échoue au hasard finit par être ignoré.
 
 Accepte les deux issues, ou passe par une aide qui converge (`drawUntilBankable`
 relance une partie si les trois vies y passent). Ne fige jamais une suite de
