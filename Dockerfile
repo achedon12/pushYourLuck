@@ -89,7 +89,7 @@ RUN apk add --no-cache binutils \
 # la documentation : rien de tout cela n'est utilisé pour lancer `server.js`.
 # La sortie `standalone` de Next contient déjà les modules dont le serveur a
 # besoin.
-FROM alpine:3.22 AS runner
+FROM alpine:3.24 AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
